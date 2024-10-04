@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Lora&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <title>Prompt</title>
+    <link rel="stylesheet" href="{{ url_for('static',filename='styles/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <a href="#">Home</a>
+            <a href="#">About</a>
+            <a href="#">Contact</a>
+        </div>
+        <h1>Enter Your Prompt</h1>
+        <p id="dir">Type in your prompt and receive a response on the next page.</p>
+        <div id="log">
+
+        </div>
+        <input id="prompt" type="text" name="text" placeholder="Enter prompt here..." />
+        <button onclick="func()">Submit</button>
+    </div>
+</body>
+</html>
+
+<script>
+    let s = ""
+    async function func() {
+        document.getElementById("dir").style.display = "none"
+        let p = document.getElementById("prompt").value
+        s += p
+        document.getElementById("prompt").value = ""
+        let log = document.getElementById("log")
+        console.log(p)
+
+        log.innerHTML += "<div class='textblock'><div class='prompt'>" + p + "</div></div>"
+
+        try {
+        const response = await fetch("http://localhost:5000/chat?text=" + encodeURIComponent(s));
+        const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
+        s += "\n" + reply + "\n"
+        log.innerHTML += "<div class='textblock'><div class='reply'>" + reply + "</div></div>";
+    } catch (error) {
+        log.innerHTML += "<div class='textblock'><div class='error'>Error fetching reply: " + error.message + "</div></div>";
+    }
+    }
+</script>
