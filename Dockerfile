@@ -10,5 +10,8 @@ COPY ./app /app
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Make the start.sh script executable
+RUN chmod +x /app/start.sh
+
 # Run the web app
 CMD ["/app/start.sh"]
