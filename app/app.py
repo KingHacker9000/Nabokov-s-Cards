@@ -8,6 +8,9 @@ load_dotenv(override=True)
 # Create Flask Application
 app = Flask(__name__)
 
+# Use the PORT environment variable, or default to port 5000
+port = int(os.getenv("PORT", 5000))
+
 openai.api_key = os.environ['OPENAI_API_KEY']
 
 # Home Directory
@@ -48,4 +51,4 @@ def chat():
     return reply
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=port)
