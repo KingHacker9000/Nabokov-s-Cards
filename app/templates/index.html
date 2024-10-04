@@ -38,7 +38,7 @@
         log.innerHTML += "<div class='textblock'><div class='prompt'>" + p + "</div></div>"
 
         try {
-        const response = await fetch("http://localhost:5000/chat?text=" + encodeURIComponent(s));
+        const response = await fetch(window.location.href + "/chat?text=" + encodeURIComponent(s));
         const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
         s += "\n" + reply + "\n"
         log.innerHTML += "<div class='textblock'><div class='reply'>" + reply + "</div></div>";
