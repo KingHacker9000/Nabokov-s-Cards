@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %} Board {% endblock %}
+
+{% block head %}
+    <script>
+      let pinImage;
+
+      // Load the image in preload()
+      function preload() {
+        // Replace 'pinboard.jpg' with the path to your image
+        pinImage = loadImage("{{ url_for('static',filename='img/pin.png') }}"); 
+      }
+    </script>
+    <script src="{{ url_for('static',filename='js/board.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+{% endblock %}

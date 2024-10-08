@@ -50,5 +50,10 @@ def chat():
         return render_template("chat.html", text=reply)
     return reply
 
+
+@app.route("/board")
+def board():
+    return render_template("board.html")
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)
