@@ -3,6 +3,12 @@ let h = window.innerHeight;
 let note_w = 150
 let note_h = 150
 
+const typeMultipliers = {
+    "word": 1,
+    "scentence": 1.5,
+    "paragraph": 2.5
+}
+
 let corkTexture;
 let emptyHand = true;
 
@@ -25,15 +31,24 @@ const stickyNoteColors = [
 ];
 
 class Note {
-    constructor(s, x, y) {
+    constructor(s, x, y, type="word") {
         this.s = s;
         this.x = x;
         this.y = y;
-        this.w = note_w;
-        this.h = note_h;
+        this.type = type;
+
+        this.w = note_w * typeMultipliers[type];
+        this.h = note_h * typeMultipliers[type];
+        console.log(s.length, (this.s.length - 200)/4)
+        if (s.length > 400) {
+            this.w += (this.s.length - 200)/4
+            this.h += (this.s.length - 200)/4
+        }
         this.pickedUp = false;
         this.mousedX;
         this.mousedY;
+
+        this.madeFrom = [];
 
         const randomIndex = Math.floor(Math.random() * stickyNoteColors.length);
         this.color = stickyNoteColors[randomIndex].rgb;
@@ -51,6 +66,10 @@ class Note {
         textFont('Lora');
 
         drawWrappedText(this.s, Math.trunc(this.x + this.w/2), Math.trunc(this.y+60), this.w - 20)
+    }
+
+    setMadeFrom(s1, s2){
+        this.madeFrom = [s1, s2];
     }
 
     setCoordinate(){
@@ -106,13 +125,15 @@ function setup() {
     createPinBoardTexture(corkTexture);
     notes = []
 
-    for (let i = 0; i < 16; i++) {
-        let s = "Text" + i.toString()
-        let n = new Note(s, random(0, width*0.75), random(0, height*0.75))
-        notes.push(n)
+    // for (let i = 0; i < 16; i++) {
+    //     let s = "Text" + i.toString()
+    //     let n = new Note(s, random(0, width*0.75), random(0, height*0.75))
+    //     notes.push(n)
         
-    }
-    
+    // }
+
+    make_notes(n=10)
+
     // Create an input element for editing notes
     input = createInput('');
     input.input(updateNoteText); // Call updateNoteText function on input
@@ -172,8 +193,8 @@ function mousePressed() {
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         // Check if mouse is over the note
-        if (mouseX >= note.x && mouseX <= note.x + note_w &&
-            mouseY >= note.y && mouseY <= note.y + note_h) {
+        if (mouseX >= note.x && mouseX <= note.x + note.w &&
+            mouseY >= note.y && mouseY <= note.y + note.h) {
             note.setMouseCoordinate();
             note.pickedUp = true;  // Pick up the note
             notes = moveToEnd(notes, i);
@@ -237,15 +258,26 @@ function touchStarted() {
 function mouseReleased() {
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
-
-        if (note.pickedUp) {
+        if (!note) {
+            continue
+        }
+        else if (note.pickedUp) {
 
             notes.forEach(other => {
                 if(other != note && isOverlapped(note.x, note.y, other)){
-                    other.s += " " + note.s
-                    other.w = ((other.w + note.w)/2)*1.15;
-                    other.h = ((other.h + note.h)/2)*1.15;
+                    //other.s += " " + note.s
+                    mix_note(other, note)
+
                     moveToEnd(notes, i).pop()
+
+                    console.log("Remove other note")
+                    for (let j = 0; j < notes.length; j++) {
+                        const n = notes[j];
+                        if(n.s == other.s){
+                            moveToEnd(notes, j).pop()
+                            break
+                        }
+                    }
                 }
             });
 
@@ -258,13 +290,26 @@ function mouseReleased() {
 function touchEnded() {
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
-
-        if (note.pickedUp) {
+        if (!note) {
+            continue
+        }
+        else if (note.pickedUp) {
 
             notes.forEach(other => {
                 if(other != note && isOverlapped(note.x, note.y, other)){
-                    other.s += " " + note.s
+                    //other.s += " " + note.s
+                    mix_note(other, note)
+
                     moveToEnd(notes, i).pop()
+
+                    console.log("Remove other note")
+                    for (let j = 0; j < notes.length; j++) {
+                        const n = notes[j];
+                        if(n.s == other.s){
+                            moveToEnd(notes, j).pop()
+                            break
+                        }
+                    }
                 }
             });
 
@@ -274,10 +319,58 @@ function touchEnded() {
     }
 }
 
+async function mix_note(n1, n2) {
+
+    try {
+        const url = window.location.href + "/combine"
+        console.log(url)
+
+        const data = {
+            s1: n1.s,
+            type1: n1.type,
+            s2: n2.s,
+            type2: n2.type
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        const reply = await response.json();
+
+        // New Note
+        notes.push(new Note(reply.s, n1.x, n1.y, reply.type))
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function make_notes(n) {
+
+    try {
+        const url = window.location.href + "/notes?n=" + encodeURIComponent(n)
+        const response = await fetch(url);
+        const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
+        
+        reply.split(" ").forEach(s => {
+            console.log("New Note!")
+            let n = new Note(s, random(0, width*0.75), random(0, height*0.75))
+            notes.push(n)
+        });
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
 function drawWrappedText(s, x, y, maxWidth) {
     let words = s.split(' '); // Split the text into words
     let line = ''; // Initialize an empty line
-    let lineHeight = 20; // Set line height (you can change this based on your font size)
+    let lineHeight = 20; // Set line height (you can change this based on y                                     our font size)
 
     for (let i = 0; i < words.length; i++) {
         let testLine = line + words[i] + ' '; // Build the test line

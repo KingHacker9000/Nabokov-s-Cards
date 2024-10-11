@@ -42,8 +42,8 @@
         const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
         s += "\n" + reply + "\n"
         log.innerHTML += "<div class='textblock'><div class='reply'>" + reply + "</div></div>";
-    } catch (error) {
-        log.innerHTML += "<div class='textblock'><div class='error'>Error fetching reply: " + error.message + "</div></div>";
-    }
+        } catch (error) {
+            log.innerHTML += "<div class='textblock'><div class='error'>Error fetching reply: " + error.message + "</div></div>";
+        }
     }
 </script>
