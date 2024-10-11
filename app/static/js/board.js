@@ -15,6 +15,7 @@ let emptyHand = true;
 let notes = [];
 let touch = false
 let input;
+let button;
 let selected = false;
 let selectedNote;
 
@@ -31,11 +32,12 @@ const stickyNoteColors = [
 ];
 
 class Note {
-    constructor(s, x, y, type="word") {
+    constructor(s, x, y, type="word", madeFrom=[]) {
         this.s = s;
         this.x = x;
         this.y = y;
         this.type = type;
+        this.madeFrom = madeFrom
 
         this.w = note_w * typeMultipliers[type];
         this.h = note_h * typeMultipliers[type];
@@ -47,8 +49,6 @@ class Note {
         this.pickedUp = false;
         this.mousedX;
         this.mousedY;
-
-        this.madeFrom = [];
 
         const randomIndex = Math.floor(Math.random() * stickyNoteColors.length);
         this.color = stickyNoteColors[randomIndex].rgb;
@@ -66,10 +66,6 @@ class Note {
         textFont('Lora');
 
         drawWrappedText(this.s, Math.trunc(this.x + this.w/2), Math.trunc(this.y+60), this.w - 20)
-    }
-
-    setMadeFrom(s1, s2){
-        this.madeFrom = [s1, s2];
     }
 
     setCoordinate(){
@@ -112,6 +108,38 @@ class Note {
         });
         noStroke()
     }
+
+    async regenerate(){
+        let n1 = this.madeFrom[0]
+        let n2 = this.madeFrom[1]
+        
+        try {
+            const url = window.location.href + "/combine"
+            console.log(url)
+    
+            const data = {
+                s1: n1.s,
+                type1: n1.type,
+                s2: n2.s,
+                type2: n2.type
+            };
+    
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+            const reply = await response.json();
+            
+            this.s = reply.s;
+    
+        } catch (error) {
+            console.log(error)
+        }
+
+    }
 }
 
 function setup() {
@@ -137,8 +165,15 @@ function setup() {
     // Create an input element for editing notes
     input = createInput('');
     input.input(updateNoteText); // Call updateNoteText function on input
-    input.size(width-10, 32)
+    input.size(width*0.8, 32)
     //input.hide(); // Hide the input by default
+
+    button = createButton('Regenerate');
+    button.size(120, 32);
+    button.position(input.x + input.width + 10, height - 30);
+
+    // Call repaint() when the button is pressed.
+    button.mousePressed(regenerateNote);
 
 }
 
@@ -154,10 +189,14 @@ function draw() {
     if (!selected) {
         resizeCanvas(windowWidth, windowHeight);
         input.hide();
+        button.hide();
     }
     else{
         resizeCanvas(windowWidth, windowHeight-42);
         input.show();
+        if (selectedNote.type != "word") {
+            button.show();
+        }
         if (selectedNote) {
             input.value(selectedNote.s)
         }
@@ -179,6 +218,12 @@ function draw() {
         note.drawNote()
     });
 
+}
+
+function regenerateNote(){
+    if(selectedNote.madeFrom != [] && selected){
+        selectedNote.regenerate()
+    }
 }
 
 function updateNoteText() {
@@ -231,8 +276,8 @@ function touchStarted() {
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         // Check if touch is over the note
-        if (touchX >= note.x && touchX <= note.x + note_w &&
-            touchY >= note.y && touchY <= note.y + note_h) {
+        if (touchX >= note.x && touchX <= note.x + note.w &&
+            touchY >= note.y && touchY <= note.y + note.h) {
                 note.setMouseCoordinate();
                 note.pickedUp = true;  // Pick up the note
                 notes = moveToEnd(notes, i);
@@ -341,8 +386,8 @@ async function mix_note(n1, n2) {
         });
         const reply = await response.json();
 
-        // New Note
-        notes.push(new Note(reply.s, n1.x, n1.y, reply.type))
+        // New Node
+        notes.push(new Note(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
 
     } catch (error) {
         console.log(error)
@@ -444,7 +489,6 @@ function drawStickyNote(x, y, w, h, color) {
     fill(0, 0, 0, 30);
     triangle(x+w, y+h-35, x+w-35, y+h, x+w-35, y+h-35);
 }
-
 
 function isOverlapped(x, y, note){
     return ((note.x - x)**2 + (note.y - y)**2) <= 8000
