@@ -41,7 +41,7 @@ class Note {
 
         this.w = note_w * typeMultipliers[type];
         this.h = note_h * typeMultipliers[type];
-        console.log(s.length, (this.s.length - 200)/4)
+        // console.log(s.length, (this.s.length - 200)/4)
         if (s.length > 400) {
             this.w += (this.s.length - 200)/4
             this.h += (this.s.length - 200)/4
@@ -134,11 +134,41 @@ class Note {
             const reply = await response.json();
             
             this.s = reply.s;
+
+            if (selectedNote == this) {
+                input.value(this.s)
+            }
     
         } catch (error) {
             console.log(error)
         }
 
+    }
+
+    isMouseOver() {
+        return mouseX >= this.x && mouseX <= this.x + this.w &&
+        mouseY >= this.y && mouseY <= this.y + this.h
+    }
+
+    resize() {
+
+        if (this.s.length > 25 && this.type == "word"){
+            this.type = "scentence"
+        }
+        if (this.s.length > 200) {
+            this.type = "paragraph"
+        }
+
+
+        this.w = note_w * typeMultipliers[this.type];
+        this.h = note_h * typeMultipliers[this.type];
+
+        console.log("RESIZE BHAI")
+
+        if (this.s.length > 400) {
+            this.w += (this.s.length - 200)/4
+            this.h += (this.s.length - 200)/4
+        }
     }
 }
 
@@ -163,7 +193,7 @@ function setup() {
     make_notes(n=10)
 
     // Create an input element for editing notes
-    input = createInput('');
+    input = createElement('textarea');;
     input.input(updateNoteText); // Call updateNoteText function on input
     input.size(width*0.8, 32)
     //input.hide(); // Hide the input by default
@@ -174,6 +204,7 @@ function setup() {
 
     // Call repaint() when the button is pressed.
     button.mousePressed(regenerateNote);
+    button.hide()
 
 }
 
@@ -186,21 +217,7 @@ function windowResized() {
 function draw() {
     //background(pinBoardImage); // Set the image as the background
     //when mouse button is pressed, circles turn black
-    if (!selected) {
-        resizeCanvas(windowWidth, windowHeight);
-        input.hide();
-        button.hide();
-    }
-    else{
-        resizeCanvas(windowWidth, windowHeight-42);
-        input.show();
-        if (selectedNote.type != "word") {
-            button.show();
-        }
-        if (selectedNote) {
-            input.value(selectedNote.s)
-        }
-    }
+    
 
     image(corkTexture, 0, 0, windowWidth, windowHeight);
 
@@ -208,7 +225,9 @@ function draw() {
         let note = notes[i];
         if (note.pickedUp) {
             emptyHand = false;
-            note.setCoordinate();
+            if(note != selectedNote) {
+                note.setCoordinate();
+            }
             break
         }
         emptyHand = true
@@ -218,6 +237,29 @@ function draw() {
         note.drawNote()
     });
 
+    drawNewNoteButton()
+
+}
+
+// Detect double click on a note
+function doubleClicked() {
+    for (let note of notes) {
+        if (note.isMouseOver()) {  // Replace with your logic for detecting if a note is clicked
+            selectedNote = note;
+            input.show();
+            if (selectedNote.type != "word") {
+                button.show();
+            }
+            input.position(note.x, note.y);  // Position input near the clicked note
+            input.size(selectedNote.w, selectedNote.h);
+            input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
+            input.value(note.s);  // Set the input value to the current note's content
+            return;
+        }
+    }
+    selectedNote = null;  // Deselect if double-clicked outside of any note
+    input.hide();
+    button.hide();
 }
 
 function regenerateNote(){
@@ -228,8 +270,24 @@ function regenerateNote(){
 
 function updateNoteText() {
     if (selectedNote) {
-        selectedNote.s = input.value(); // Update the note's text
+        selectedNote.s = input.value().replace(/\n/g, ' '); // Update the note's text
+        console.log(selectedNote.s)
+        selectedNote.resize()
     }
+}
+
+function drawNewNoteButton() {
+    const r = 75;
+
+    fill(155, 155, 155, 125)
+    stroke(0, 0, 0, 200)
+    if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {
+        fill(100, 100, 100, 125) 
+    }
+    circle(width - 60, height - 60, r)
+    textSize(24);
+    textFont('Lora');
+    text("+", width - 60, height - 60)
 }
 
 function mousePressed() {
@@ -244,7 +302,7 @@ function mousePressed() {
             note.pickedUp = true;  // Pick up the note
             notes = moveToEnd(notes, i);
             selected = true;
-            selectedNote = note
+            //selectedNote = note
             break
         }
     }
@@ -255,6 +313,7 @@ function mousePressed() {
 
     if(!selected){
         selectedNote = null;
+        input.hide()
     }
 
     if (selectedNote) {
@@ -301,6 +360,16 @@ function touchStarted() {
 }
 
 function mouseReleased() {
+    // New  Note
+    const r = 75;
+
+    if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
+        let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        notes.push(new_note)
+        selectedNote = new_note;
+    }
+
+    // Notes Pickup & Merge
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         if (!note) {
@@ -413,7 +482,7 @@ async function make_notes(n) {
 }
 
 function drawWrappedText(s, x, y, maxWidth) {
-    let words = s.split(' '); // Split the text into words
+    let words = s.replace(/\n/g, ' ').split(' '); // Split the text into words
     let line = ''; // Initialize an empty line
     let lineHeight = 20; // Set line height (you can change this based on y                                     our font size)
 
