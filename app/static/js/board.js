@@ -5,7 +5,7 @@ let note_h = 150
 
 const typeMultipliers = {
     "word": 1,
-    "scentence": 1.5,
+    "sentence": 1.5,
     "paragraph": 2.5
 }
 
@@ -159,7 +159,7 @@ class Note {
     resize() {
 
         if (this.s.length > 25 && this.type == "word"){
-            this.type = "scentence"
+            this.type = "sentence"
         }
         if (this.s.length > 100) {
             this.type = "paragraph"
@@ -352,21 +352,23 @@ function touchStarted() {
         // Check if touch is over the note
         if (touchX >= note.x && touchX <= note.x + note.w &&
             touchY >= note.y && touchY <= note.y + note.h) {
-                note.setMouseCoordinate();
-                note.pickedUp = true;  // Pick up the note
-                notes = moveToEnd(notes, i);
-                selected = true;
-                selectedNote = note
-                break
+            
+            note.setMouseCoordinate();
+            note.pickedUp = true;  // Pick up the note
+            notes = moveToEnd(notes, i);
+            selected = true;
+
+            break
         }
     }
 
-    if(height - mouseY  <= 22){
+    if(height - touchY  <= 22){
         selected = true;
     }
 
     if(!selected){
         selectedNote = null;
+        input.hide()
     }
 
     if (selectedNote) {
@@ -403,7 +405,6 @@ function mouseReleased() {
 
                     moveToEnd(notes, i).pop()
 
-                    console.log("Remove other note")
                     for (let j = 0; j < notes.length; j++) {
                         const n = notes[j];
                         if(n.s == other.s){
@@ -421,12 +422,31 @@ function mouseReleased() {
 }
 
 function touchEnded() {
+
+    // touch Specific
+    const touchX = touches[0].x 
+    const touchY = touches[0].y
+    // ----
+
+    // New  Note
+    const r = 75;
+
+    if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
+        let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        notes.push(new_note)
+    }
+
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         if (!note) {
             continue
         }
         else if (note.pickedUp) {
+
+            if (touchX <= 200 && touchY >= height - 150) {
+                moveToEnd(notes, i).pop()
+                break
+            }
 
             notes.forEach(other => {
                 if(other != note && isOverlapped(note.x, note.y, other)){
@@ -435,7 +455,6 @@ function touchEnded() {
 
                     moveToEnd(notes, i).pop()
 
-                    console.log("Remove other note")
                     for (let j = 0; j < notes.length; j++) {
                         const n = notes[j];
                         if(n.s == other.s){
@@ -456,7 +475,6 @@ async function mix_note(n1, n2) {
 
     try {
         const url = window.location.href + "/combine"
-        console.log(url)
 
         const data = {
             s1: n1.s,
@@ -474,6 +492,7 @@ async function mix_note(n1, n2) {
         });
         const reply = await response.json();
 
+        console.log(reply.Prompt)
         // New Node
         notes.push(new Note(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
 
@@ -490,7 +509,6 @@ async function make_notes(n) {
         const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
         
         reply.split(" ").forEach(s => {
-            console.log("New Note!")
             let n = new Note(s, random(0, width*0.75), random(0, height*0.75))
             notes.push(n)
         });

@@ -49,42 +49,48 @@ def combine():
     type1: str = data.get("type1")
     type2: str = data.get("type2")
 
-    # 2 words
+    # Combine 2 words into a sentence
     if type1 == "word" == type2:
-        r = get_response("Your Goal is to Combine 2 words in a cohesive scentence that incorporates the 2 words or their essence.", 
-                            f"Combine the following words into a single cohesive sentence: '{s1}' and '{s2}':")
+        system_content = "Your Goal is to Combine 2 words in a cohesive sentence that incorporates the 2 words or their essence."
+        user_content = f"Combine the following words into a single cohesive sentence: '{s1}' and '{s2}':"
+        r = get_response(system_content, user_content)
     
-        return jsonify({"s": r, "type": "scentence"}), 200
+        # Return the
+        return jsonify({"s": r, "type": "sentence", "Prompt": [system_content, user_content]}), 200
     
-    # 2 scentences
-    if type1 == "scentence" == type2:
-        r = get_response("Your Goal is to Combine 2 scentences into a cohesive narrative that incorporates the 2 scentences or their essence.", 
-                            f"Combine the following sentences into a cohesive narrative paragraph: '{s1}' and '{s2}':")
+    # 2 sentences
+    if type1 == "sentence" == type2:
+        system_content = "Your Goal is to Combine 2 sentences into a cohesive narrative that incorporates the 2 sentences or their essence."
+        user_content = f"Combine the following sentences into a cohesive narrative paragraph: '{s1}' and '{s2}':"
+        r = get_response(system_content, user_content)
     
-        return jsonify({"s": r, "type": "paragraph"}), 200
+        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
     
-    # 1 word 1 scentence
-    elif "word" in [type1, type2] and "scentence" in [type1, type2]:
-        r = get_response("Your Goal is to Combine a word and a scentence into a cohesive narrative that incorporates them or their essence.", 
-                            f"Combine the following word with the following sentence into a narrative paragraph: '{s1}' and '{s2}':")
+    # 1 word 1 sentence
+    elif "word" in [type1, type2] and "sentence" in [type1, type2]:
+        system_content = "Your Goal is to Combine a word and a sentence into a cohesive narrative that incorporates them or their essence."
+        user_content = f"Combine the following word with the following sentence into a narrative paragraph: '{s1}' and '{s2}':"
+        r = get_response(system_content, user_content)
     
-        return jsonify({"s": r, "type": "paragraph"}), 200
+        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
 
     # 1 word 1 paragraph
     elif "word" in [type1, type2] and "paragraph" in [type1, type2]:
-        r = get_response("Your Goal is to Combine a word and a paragraph into a cohesive narrative that incorporates them or their essence.", 
-                            f"Combine the following word with the following paragraph into a narrative paragraph: '{s1}' and '{s2}':")
+        system_content = "Your Goal is to Combine a word and a paragraph into a cohesive narrative that incorporates them or their essence."
+        user_content =  f"Combine the following word with the following paragraph into a narrative paragraph: '{s1}' and '{s2}':"
+        r = get_response(system_content, user_content)
     
-        return jsonify({"s": r, "type": "paragraph"}), 200
+        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
     
-    # 1 scentence 1 paragraph
-    elif "scentence" in [type1, type2] and "paragraph" in [type1, type2]:
-        r = get_response("Your Goal is to Combine a scentence and a paragraph into a cohesive narrative that incorporates them or their essence.", 
-                            f"Combine the following scentence with the following paragraph into a narrative paragraph: '{s1}' and '{s2}':")
+    # 1 sentence 1 paragraph
+    elif "sentence" in [type1, type2] and "paragraph" in [type1, type2]:
+        system_content = "Your Goal is to Combine a sentence and a paragraph into a cohesive narrative that incorporates them or their essence."
+        user_content = f"Combine the following sentence with the following paragraph into a narrative paragraph: '{s1}' and '{s2}':"
+        r = get_response(system_content, user_content)
     
-        return jsonify({"s": r, "type": "paragraph"}), 200
+        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
     
-    return jsonify({"s": "Error", "type": "word"}), 200
+    return jsonify({"s": "Error: Unable to Mix 2 Paragraphs", "type": "sentence"}), 200
 
 
 @app.route("/board/notes")
