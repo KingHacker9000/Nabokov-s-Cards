@@ -81,6 +81,13 @@ class Note {
     }
 
     drawOverlay(){
+
+        if (mouseX <= 200 && mouseY >= height - 150) {
+            fill(200, 0, 0, 100); // Semi-transparent black for the overlay
+            stroke(0, 0, 0, 100);
+            rect(this.x, this.y, this.w, this.h, 3);
+        }
+
         fill(0, 0, 0, 50); // Semi-transparent black for the overlay
         stroke(0, 0, 0, 100);
         notes.forEach(note => {
@@ -183,13 +190,6 @@ function setup() {
     createPinBoardTexture(corkTexture);
     notes = []
 
-    // for (let i = 0; i < 16; i++) {
-    //     let s = "Text" + i.toString()
-    //     let n = new Note(s, random(0, width*0.75), random(0, height*0.75))
-    //     notes.push(n)
-        
-    // }
-
     make_notes(n=10)
 
     // Create an input element for editing notes
@@ -198,11 +198,10 @@ function setup() {
     input.size(width*0.8, 32)
     //input.hide(); // Hide the input by default
 
+    // REGEN BUTTON
     button = createButton('Regenerate');
     button.size(120, 32);
-    button.position(input.x + input.width + 10, height - 30);
 
-    // Call repaint() when the button is pressed.
     button.mousePressed(regenerateNote);
     button.hide()
 
@@ -233,11 +232,29 @@ function draw() {
         emptyHand = true
     }
 
+    drawDelCorner()
+
     notes.forEach(note => {
         note.drawNote()
     });
 
     drawNewNoteButton()
+
+    if (selectedNote && selected) {
+        button.position(selectedNote.x + selectedNote.w - 122, selectedNote.y + selectedNote.h - 34);
+    }
+    else {
+        button.hide()
+    }
+
+}
+
+function drawDelCorner() {
+
+    fill(255, 0, 0, 55);
+    stroke(255, 0, 0);
+    rect(-5, height - 150, 205, 155);
+    image(trashImage, 100 - 20, height - 75 - 20, 40, 40);
 
 }
 
@@ -247,7 +264,7 @@ function doubleClicked() {
         if (note.isMouseOver()) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
-            if (selectedNote.type != "word") {
+            if (selectedNote.madeFrom.length > 0) {
                 button.show();
             }
             input.position(note.x, note.y);  // Position input near the clicked note
@@ -303,6 +320,7 @@ function mousePressed() {
             notes = moveToEnd(notes, i);
             selected = true;
             //selectedNote = note
+            console.log(note.s)
             break
         }
     }
@@ -366,7 +384,6 @@ function mouseReleased() {
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
         let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
-        selectedNote = new_note;
     }
 
     // Notes Pickup & Merge
@@ -376,6 +393,13 @@ function mouseReleased() {
             continue
         }
         else if (note.pickedUp) {
+
+            console.log(note.x, note.y)
+            if (mouseX <= 200 && mouseY >= height - 150) {
+                console.log("Del note")
+                moveToEnd(notes, i).pop()
+                break
+            }
 
             notes.forEach(other => {
                 if(other != note && isOverlapped(note.x, note.y, other)){

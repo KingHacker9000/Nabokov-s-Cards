@@ -10,6 +10,7 @@
       function preload() {
         // Replace 'pinboard.jpg' with the path to your image
         pinImage = loadImage("{{ url_for('static',filename='img/pin.png') }}"); 
+        trashImage = loadImage("{{ url_for('static',filename='img/trash.png') }}"); 
       }
     </script>
     <script src="{{ url_for('static',filename='js/board.js') }}"></script>
