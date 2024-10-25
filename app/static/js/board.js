@@ -41,7 +41,7 @@ class Note {
 
         this.w = note_w * typeMultipliers[type];
         this.h = note_h * typeMultipliers[type];
-        // console.log(s.length, (this.s.length - 200)/4)
+
         if (s.length > 400) {
             this.w += (this.s.length - 200)/4
             this.h += (this.s.length - 200)/4
@@ -122,7 +122,6 @@ class Note {
         
         try {
             const url = window.location.href + "/combine"
-            console.log(url)
     
             const data = {
                 s1: n1.s,
@@ -162,7 +161,7 @@ class Note {
         if (this.s.length > 25 && this.type == "word"){
             this.type = "scentence"
         }
-        if (this.s.length > 200) {
+        if (this.s.length > 100) {
             this.type = "paragraph"
         }
 
@@ -170,12 +169,12 @@ class Note {
         this.w = note_w * typeMultipliers[this.type];
         this.h = note_h * typeMultipliers[this.type];
 
-        console.log("RESIZE BHAI")
 
         if (this.s.length > 400) {
             this.w += (this.s.length - 200)/4
             this.h += (this.s.length - 200)/4
         }
+        input.size(this.w, this.h);
     }
 }
 
@@ -288,7 +287,6 @@ function regenerateNote(){
 function updateNoteText() {
     if (selectedNote) {
         selectedNote.s = input.value().replace(/\n/g, ' '); // Update the note's text
-        console.log(selectedNote.s)
         selectedNote.resize()
     }
 }
@@ -319,8 +317,7 @@ function mousePressed() {
             note.pickedUp = true;  // Pick up the note
             notes = moveToEnd(notes, i);
             selected = true;
-            //selectedNote = note
-            console.log(note.s)
+
             break
         }
     }
@@ -394,9 +391,7 @@ function mouseReleased() {
         }
         else if (note.pickedUp) {
 
-            console.log(note.x, note.y)
             if (mouseX <= 200 && mouseY >= height - 150) {
-                console.log("Del note")
                 moveToEnd(notes, i).pop()
                 break
             }
