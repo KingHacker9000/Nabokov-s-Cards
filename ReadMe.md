@@ -25,6 +25,10 @@ Create a file named .env under the app directory and put in the following text:
 
 ```python app/app.py```
 
+# Viewing Prompts on the Console
+
+Type ```DEBUG = true;``` on the console.
+
 # Editing The Prompt
 
 In `app/app.py` find the combine function. Edit the Prompts for each of the various types of combinations.

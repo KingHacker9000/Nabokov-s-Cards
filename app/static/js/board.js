@@ -74,13 +74,42 @@ class Note {
         if(this.pickedUp){
             this.drawOverlay(this.x, this.y, this.w, this.h)
         }
-        image(pinImage, this.x+this.w/2 - 15, this.y-15, 40, 40);
+
+        if (this.madeFrom.length > 0) {
+
+            let pinX = this.x + 10
+
+            if (this.stackSize() > 5) {
+                image(pinImage, pinX, this.y-15, 40, 40);
+                textSize(24)
+                text("x" + this.stackSize().toString(), pinX + 50, this.y+20)
+            }
+            else {
+                for (let i = 0; i < this.stackSize(); i++) {
+                    image(pinImage, pinX, this.y-15, 40, 40); 
+                    pinX += 40            
+                }
+            }
+        }
+        else {
+            image(pinImage, this.x+this.w/2 - 15, this.y-15, 40, 40);
+        }
         fill(0, 0, 0)
         textAlign(CENTER, CENTER);
         textSize(map(min(1500000, height * width), 300000, 1500000, 16, 24));
         textFont('Lora');
 
         drawWrappedText(this.s, Math.trunc(this.x + this.w/2), Math.trunc(this.y+60), this.w - 20)
+    }
+
+    stackSize() {
+        let i = 0;
+
+        if (this.madeFrom.length == 0) {
+            return 1
+        }
+
+        return this.madeFrom[0].stackSize() + this.madeFrom[1].stackSize()
     }
 
     setCoordinate(){
