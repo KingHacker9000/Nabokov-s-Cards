@@ -233,7 +233,7 @@ function setup() {
     createPinBoardTexture(corkTexture);
     notes = []
 
-    make_notes(n=3)
+    make_notes(n=10)
 
     // Create an input element for editing notes
     input = createElement('textarea');;
