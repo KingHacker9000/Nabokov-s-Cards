@@ -1,3 +1,5 @@
+let DEBUG = false;
+
 let w = window.innerWidth;
 let h = window.innerHeight;
 let note_w = 150
@@ -16,8 +18,17 @@ let notes = [];
 let touch = false
 let input;
 let button;
+let decoupleButton;
 let selected = false;
 let selectedNote;
+
+// Touch Specific
+let TouchScreen = false;
+let touchLastX = 0;
+let touchLastY = 0;
+let lastTouchTime = 0;
+let doubleTapThreshold = 300; // Time in milliseconds
+//----------------
 
 const stickyNoteColors = [
     { name: "Classic Yellow", rgb: [255, 255, 153] },
@@ -55,6 +66,10 @@ class Note {
     }
 
     drawNote() {
+        if (selected && selectedNote == this && this.madeFrom.length > 0) {
+            drawMadeFromNote(this.madeFrom[0], this.x+60, this.y-60, this.w, this.h, this.color)
+            drawMadeFromNote(this.madeFrom[1], this.x+30, this.y-30, this.w, this.h, this.color)
+        }
         drawStickyNote(this.x, this.y, this.w, this.h, this.color);
         if(this.pickedUp){
             this.drawOverlay(this.x, this.y, this.w, this.h)
@@ -189,7 +204,7 @@ function setup() {
     createPinBoardTexture(corkTexture);
     notes = []
 
-    make_notes(n=10)
+    make_notes(n=3)
 
     // Create an input element for editing notes
     input = createElement('textarea');;
@@ -204,12 +219,22 @@ function setup() {
     button.mousePressed(regenerateNote);
     button.hide()
 
+    decoupleButton = createButton('Decouple');
+    decoupleButton.size(120, 32);
+
+    decoupleButton.mousePressed(decoupleNote);
+    decoupleButton.hide()
+
+    // Draw Note Pad
+    drawNotepad()
+
 }
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     corkTexture = createGraphics(windowWidth, windowHeight);  // Resize the buffer
     createPinBoardTexture(corkTexture);
+    drawNotepad()
 }
 
 function draw() {
@@ -233,6 +258,9 @@ function draw() {
 
     drawDelCorner()
 
+    // NotePad Background
+    drawNotepadBackground()
+
     notes.forEach(note => {
         note.drawNote()
     });
@@ -241,9 +269,18 @@ function draw() {
 
     if (selectedNote && selected) {
         button.position(selectedNote.x + selectedNote.w - 122, selectedNote.y + selectedNote.h - 34);
+        decoupleButton.position(selectedNote.x + selectedNote.w - 244, selectedNote.y + selectedNote.h - 34)
     }
     else {
         button.hide()
+        decoupleButton.hide()
+    }
+
+    if (touch) {    
+        // Touch Specific
+        touchLastX = touches[0].x;
+        touchLastY = touches[0].y; 
+        //----------------
     }
 
 }
@@ -265,6 +302,7 @@ function doubleClicked() {
             input.show();
             if (selectedNote.madeFrom.length > 0) {
                 button.show();
+                decoupleButton.show()
             }
             input.position(note.x, note.y);  // Position input near the clicked note
             input.size(selectedNote.w, selectedNote.h);
@@ -276,11 +314,47 @@ function doubleClicked() {
     selectedNote = null;  // Deselect if double-clicked outside of any note
     input.hide();
     button.hide();
+    decoupleButton.hide()
+}
+
+function doubleTapped() {
+    for (let note of notes) {
+        if (touchLastX >= note.x && touchLastX <= note.x + note.w &&
+            touchLastY >= note.y && touchLastY <= note.y + note.h) {  // Replace with your logic for detecting if a note is clicked
+            selectedNote = note;
+            input.show();
+            if (selectedNote.madeFrom.length > 0) {
+                button.show();
+                decoupleButton.show()
+            }
+            input.position(note.x, note.y);  // Position input near the clicked note
+            input.size(selectedNote.w, selectedNote.h);
+            input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
+            input.value(note.s);  // Set the input value to the current note's content
+            return;
+        }
+    }
+    selectedNote = null;  // Deselect if double-clicked outside of any note
+    input.hide();
+    button.hide();
+    decoupleButton.hide()
 }
 
 function regenerateNote(){
     if(selectedNote.madeFrom != [] && selected){
         selectedNote.regenerate()
+    }
+}
+
+function decoupleNote() {
+    if(selectedNote.madeFrom != [] && selected){
+        let n1 = selectedNote.madeFrom[0]
+        let n2 = selectedNote.madeFrom[1]
+
+        notes.push(n1)
+        notes.push(n2)
+
+        moveToEnd(notes, notes.indexOf(selectedNote)).pop()
     }
 }
 
@@ -344,6 +418,18 @@ function touchStarted() {
     const touchX = touches[0].x 
     const touchY = touches[0].y
     // ----
+
+    // Check Double Tap ---------------
+    let currentTime = millis(); // Get the current time in milliseconds
+
+    // Check if the time between the last touch and current touch is within the threshold
+    if (currentTime - lastTouchTime < doubleTapThreshold) {
+        doubleTapped();
+    }
+
+    // Update lastTouchTime to the current time
+    lastTouchTime = currentTime;
+    //---------------------------------
 
 
     selected = false;
@@ -424,8 +510,9 @@ function mouseReleased() {
 function touchEnded() {
 
     // touch Specific
-    const touchX = touches[0].x 
-    const touchY = touches[0].y
+    const touchX = touchLastX 
+    const touchY = touchLastY
+    touch = false;
     // ----
 
     // New  Note
@@ -492,7 +579,11 @@ async function mix_note(n1, n2) {
         });
         const reply = await response.json();
 
-        console.log(reply.Prompt)
+        if (DEBUG){
+            console.log("System Content", reply.Prompt[0])
+            console.log("User Content", reply.Prompt[1])
+            console.log("------------------------------------------")
+        }
         // New Node
         notes.push(new Note(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
 
@@ -509,7 +600,7 @@ async function make_notes(n) {
         const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
         
         reply.split(" ").forEach(s => {
-            let n = new Note(s, random(0, width*0.75), random(0, height*0.75))
+            let n = new Note(s, random(0, width*0.5), random(0, height*0.5))
             notes.push(n)
         });
 
@@ -594,6 +685,43 @@ function drawStickyNote(x, y, w, h, color) {
     strokeWeight(1);
     fill(0, 0, 0, 30);
     triangle(x+w, y+h-35, x+w-35, y+h, x+w-35, y+h-35);
+}
+
+function drawMadeFromNote(note, x, y, w, h, color) {
+  
+    // Draw the shadow for the sticky note
+    fill(0, 0, 0, 50); // Semi-transparent black for the shadow
+    noStroke()
+    rect(x + 10, y + 10, w, h, 10); // Shadow slightly offset
+
+    // Set the color for the sticky note (light yellow)
+    fill(color[0]-20, color[1]-20, color[2]-20, 255); // Yellow with some transparency
+    stroke(color[0]+10, color[1]+10, color[2]+10); // Light gray stroke for outline
+    strokeWeight(2);
+    
+    // Draw the rectangle (sticky note)
+    rect(x, y, w, h, 2); // Rounded corners
+
+    strokeWeight(1);
+    fill(0, 0, 0, 30);
+    triangle(x+w, y+h-35, x+w-35, y+h, x+w-35, y+h-35);
+
+    fill(0, 0, 0)
+    textAlign(LEFT, CENTER);
+    textSize(map(min(1500000, height * width), 300000, 1500000, 16, 24));
+    textFont('Lora');
+
+    s = note.s
+    let maxLen = 15
+
+    while (textWidth(s.substring(0, maxLen)) < w - 55 && maxLen < s.length) {
+        maxLen += 1
+    }
+
+    if (s.length > maxLen) {
+        s = s.substring(0, maxLen) + "..."; // Truncate and add ellipsis
+    }
+    text(s, x + 15, y + 15)
 }
 
 function isOverlapped(x, y, note){
