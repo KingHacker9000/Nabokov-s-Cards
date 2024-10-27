@@ -2,7 +2,26 @@
 let notepadWidth = 0;
 let notepadHeight = 0;
 let notepadX = 0;
-let t = "";
+let t = `
+
+How to Use:
+- Click and Drag Note Cards to Mix them using AI!
+- You can Combine Words, Sentences and Paragraphs (You Can't Merge 2 Paragraphs!)
+- Double-click to Edit the Note Cards.
+- Keep Text You Like in this Note Pad and Edit Freely.
+- Enjoy!
+
+Add A New Card:
+- Click the + Button on the bottom right corner, then Edit the Text on the New Note
+
+Delete Card:
+- Drag the Card to the bottom-left Trash Can
+
+Regenerating Cards:
+- Double Click and Hit Regenerate
+
+Decoupling:
+- Double Click and Hit Decouple`;
 let notePad = null;
 
 // Function to create a notepad on the right side of the canvas
