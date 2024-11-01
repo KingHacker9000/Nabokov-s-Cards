@@ -19,8 +19,16 @@ let touch = false
 let input;
 let button;
 let decoupleButton;
+let deleteButton;
 let selected = false;
 let selectedNote;
+
+
+// Tray
+let openTray = false;
+
+// Tutorial
+let openTutorial = false;
 
 // Touch Specific
 let TouchScreen = false;
@@ -63,43 +71,71 @@ class Note {
 
         const randomIndex = Math.floor(Math.random() * stickyNoteColors.length);
         this.color = stickyNoteColors[randomIndex].rgb;
+
+        this.sizeFac = 1;
     }
 
     drawNote() {
-        if (selected && selectedNote == this && this.madeFrom.length > 0) {
-            drawMadeFromNote(this.madeFrom[0], this.x+60, this.y-60, this.w, this.h, this.color)
-            drawMadeFromNote(this.madeFrom[1], this.x+30, this.y-30, this.w, this.h, this.color)
+
+        // Check if in Tray Area
+        if (openTray && this.x + this.w >= width - TrayWidth) {
+            this.sizeFac = map(min((this.x + this.w - width + TrayWidth), this.w), 0, this.w, 1, 0.5)
+
+            if (this.sizeFac == 0.5 && !trayNotes.includes(this)) {
+                trayNotes.push(this)
+            }
         }
-        drawStickyNote(this.x, this.y, this.w, this.h, this.color);
+        else if (openTray) {
+            this.sizeFac = 1;
+
+            if (trayNotes.includes(this)) {
+                moveToEnd(trayNotes, trayNotes.indexOf(this)).pop()
+            }
+        }
+        else {
+            this.sizeFac = 1;
+        }
+
+        // See Stack
+        if (selected && selectedNote == this && this.madeFrom.length > 0) {
+            drawMadeFromNote(this.madeFrom[0], this.x+(60*this.sizeFac), this.y-(60*this.sizeFac), this.w*this.sizeFac, this.h*this.sizeFac, this.color)
+            drawMadeFromNote(this.madeFrom[1], this.x+(30*this.sizeFac), this.y-(30*this.sizeFac), this.w*this.sizeFac, this.h*this.sizeFac, this.color)
+        }
+
+
+        drawStickyNote(this.x, this.y, this.w, this.h, this.color, this.sizeFac);
+
+
         if(this.pickedUp){
-            this.drawOverlay(this.x, this.y, this.w, this.h)
+            this.drawOverlay(this.x, this.y, this.w*this.sizeFac, this.h*this.sizeFac)
         }
 
         if (this.madeFrom.length > 0) {
 
-            let pinX = this.x + 10
+            let pinX = this.x + (10 * this.sizeFac)
 
             if (this.stackSize() > 5) {
-                image(pinImage, pinX, this.y-15, 40, 40);
-                textSize(24)
-                text("x" + this.stackSize().toString(), pinX + 50, this.y+20)
+                image(pinImage, pinX, this.y-(15 * this.sizeFac), 40 * this.sizeFac, 40 * this.sizeFac);
+                textSize(24 * this.sizeFac)
+                text("x" + this.stackSize().toString(), pinX + (50  * this.sizeFac), this.y+(20 * this.sizeFac))
             }
             else {
                 for (let i = 0; i < this.stackSize(); i++) {
-                    image(pinImage, pinX, this.y-15, 40, 40); 
-                    pinX += 40            
+                    image(pinImage, pinX, this.y-(15 * this.sizeFac), 40 * this.sizeFac, 40 * this.sizeFac); 
+                    pinX += 40  * this.sizeFac            
                 }
             }
         }
         else {
-            image(pinImage, this.x+this.w/2 - 15, this.y-15, 40, 40);
+            image(pinImage, this.x+((this.w/2 - 15)*this.sizeFac), this.y-(15*this.sizeFac), 40 * this.sizeFac, 40 * this.sizeFac);
         }
         fill(0, 0, 0)
         textAlign(CENTER, CENTER);
-        textSize(map(min(1500000, height * width), 300000, 1500000, 16, 24));
+        let calculatedFontSize = map(max(min(3137464, height * width), 300000), 300000, 3137464, 14, 16)
+        textSize(calculatedFontSize * this.sizeFac);
         textFont('Lora');
 
-        drawWrappedText(this.s, Math.trunc(this.x + this.w/2), Math.trunc(this.y+60), this.w - 20)
+        drawWrappedText(this.s, Math.trunc(this.x + (this.w/2)*this.sizeFac), Math.trunc(this.y+(60*this.sizeFac)), (this.w - 20)*this.sizeFac, this.sizeFac)
     }
 
     stackSize() {
@@ -126,12 +162,6 @@ class Note {
 
     drawOverlay(){
 
-        if (mouseX <= 200 && mouseY >= height - 150) {
-            fill(200, 0, 0, 100); // Semi-transparent black for the overlay
-            stroke(0, 0, 0, 100);
-            rect(this.x, this.y, this.w, this.h, 3);
-        }
-
         fill(0, 0, 0, 50); // Semi-transparent black for the overlay
         stroke(0, 0, 0, 100);
         notes.forEach(note => {
@@ -139,7 +169,7 @@ class Note {
                 note.drawNote()
                 fill(0, 0, 0, 50); // Semi-transparent black for the overlay
                 stroke(0, 0, 0, 100);
-                rect(note.x, note.y, note.w, note.h, 3);
+                rect(note.x, note.y, note.w*note.sizeFac, note.h*note.sizeFac, 3*this.sizeFac);
                 
                 this.pickedUp = false;
                 this.drawNote()
@@ -147,14 +177,14 @@ class Note {
 
                 fill(0, 0, 0, 50); // Semi-transparent black for the overlay
                 stroke(0, 0, 0, 100);
-                rect(this.x, this.y, this.w, this.h, 3);
+                rect(this.x, this.y, this.w*this.sizeFac, this.h*this.sizeFac, 3*this.sizeFac);
 
                 fill(255, 255, 255, 50); // Semi-transparent black for the overlay
                 stroke(255, 255, 255, 100);
-                circle(this.x + this.w/2, this.y+this.h/2, 50)
+                circle(this.x + this.w*this.sizeFac/2, this.y+(this.h*this.sizeFac/2), 50*this.sizeFac)
                 textSize(24);
                 textFont('Lora');
-                text("+", this.x + this.w/2, this.y+this.h/2)
+                text("+", this.x + this.w*this.sizeFac/2, this.y + this.h*this.sizeFac/2)
             }
         });
         noStroke()
@@ -196,8 +226,8 @@ class Note {
     }
 
     isMouseOver() {
-        return mouseX >= this.x && mouseX <= this.x + this.w &&
-        mouseY >= this.y && mouseY <= this.y + this.h
+        return mouseX >= this.x && mouseX <= this.x + this.w * this.sizeFac &&
+        mouseY >= this.y && mouseY <= this.y + this.h * this.sizeFac
     }
 
     resize() {
@@ -242,20 +272,27 @@ function setup() {
     //input.hide(); // Hide the input by default
 
     // REGEN BUTTON
-    button = createButton('Regenerate');
-    button.size(120, 32);
+    button = createButton('Reg');
+    button.size(40, 32);
 
     button.mousePressed(regenerateNote);
     button.hide()
 
-    decoupleButton = createButton('Decouple');
-    decoupleButton.size(120, 32);
+    decoupleButton = createButton('DC');
+    decoupleButton.size(40, 32);
 
     decoupleButton.mousePressed(decoupleNote);
-    decoupleButton.hide()
+    decoupleButton.hide();
 
-    // Draw Note Pad
-    drawNotepad()
+    deleteButton = createButton('Del');
+    deleteButton.size(40, 32);
+
+    deleteButton.mousePressed(deleteNote);
+    deleteButton.hide();
+
+
+    // Tray Setup
+    TrayWidth = width / 6
 
 }
 
@@ -263,16 +300,22 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     corkTexture = createGraphics(windowWidth, windowHeight);  // Resize the buffer
     createPinBoardTexture(corkTexture);
-    drawNotepad()
+    TrayWidth = width / 6
 }
 
 function draw() {
-    //background(pinBoardImage); // Set the image as the background
-    //when mouse button is pressed, circles turn black
-    
 
+    // Tutorial Slide Pauses Rest of the Program
+    if (openTutorial) {
+        drawTutorialOverlay()
+        drawHowToButton()
+        return
+    }
+    
+    // Pinboard Texture Image
     image(corkTexture, 0, 0, windowWidth, windowHeight);
 
+    // Reposition Notes
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         if (note.pickedUp) {
@@ -285,24 +328,31 @@ function draw() {
         emptyHand = true
     }
 
-    drawDelCorner()
 
-    // NotePad Background
-    drawNotepadBackground()
+    // Tray Specific
+    drawTrayButton()
+    if(openTray) drawTray()
 
+    // Draw Notes
     notes.forEach(note => {
         note.drawNote()
     });
 
     drawNewNoteButton()
+    drawHowToButton()
 
+    // Note Buttons
     if (selectedNote && selected) {
-        button.position(selectedNote.x + selectedNote.w - 122, selectedNote.y + selectedNote.h - 34);
-        decoupleButton.position(selectedNote.x + selectedNote.w - 244, selectedNote.y + selectedNote.h - 34)
+        spaceAround = 5
+        xstart = selectedNote.x + (selectedNote.w * selectedNote.sizeFac / 2) - (spaceAround + 60) * selectedNote.sizeFac
+        button.position(xstart + 80 * selectedNote.sizeFac + (2*spaceAround), selectedNote.y + (selectedNote.h - 34)*selectedNote.sizeFac);
+        decoupleButton.position(xstart+ spaceAround + 40 * selectedNote.sizeFac, selectedNote.y + (selectedNote.h - 34)*selectedNote.sizeFac)
+        deleteButton.position(xstart, selectedNote.y + (selectedNote.h - 34)*selectedNote.sizeFac)
     }
     else {
         button.hide()
         decoupleButton.hide()
+        deleteButton.hide()
     }
 
     if (touch) {    
@@ -314,14 +364,7 @@ function draw() {
 
 }
 
-function drawDelCorner() {
-
-    fill(255, 0, 0, 55);
-    stroke(255, 0, 0);
-    rect(-5, height - 150, 205, 155);
-    image(trashImage, 100 - 20, height - 75 - 20, 40, 40);
-
-}
+//Trash Image: image(trashImage, 100 - 20, height - 75 - 20, 40, 40);
 
 // Detect double click on a note
 function doubleClicked() {
@@ -333,28 +376,49 @@ function doubleClicked() {
                 button.show();
                 decoupleButton.show()
             }
+            else {
+                button.hide();
+                decoupleButton.hide()
+            }
+            deleteButton.show()
             input.position(note.x, note.y);  // Position input near the clicked note
-            input.size(selectedNote.w, selectedNote.h);
+            input.size(selectedNote.w * selectedNote.sizeFac, selectedNote.h * selectedNote.sizeFac);
             input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
             input.value(note.s);  // Set the input value to the current note's content
             return;
         }
     }
-    selectedNote = null;  // Deselect if double-clicked outside of any note
+
+    // ONLY make new Note When NOT Pressing a Side Button
+    if (mouseX < width - 150) {
+        // Make new note
+        let new_note = new Note("Enter Text", mouseX, mouseY);
+        notes.push(new_note)
+    }
+    // selectedNote = new_note;  // Deselect if double-clicked outside of any note
+    // input.show();
+    // button.show();
+    // decoupleButton.show()
+    // deleteButton.show()
+
+    // Dont Select New Note
+    selectedNote = null;
     input.hide();
     button.hide();
     decoupleButton.hide()
+    deleteButton.show()
 }
 
 function doubleTapped() {
     for (let note of notes) {
-        if (touchLastX >= note.x && touchLastX <= note.x + note.w &&
-            touchLastY >= note.y && touchLastY <= note.y + note.h) {  // Replace with your logic for detecting if a note is clicked
+        if (touchLastX >= note.x && touchLastX <= note.x + note.w * note.sizeFac &&
+            touchLastY >= note.y && touchLastY <= note.y + note.h * note.sizeFac) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
             if (selectedNote.madeFrom.length > 0) {
                 button.show();
                 decoupleButton.show()
+                deleteButton.show()
             }
             input.position(note.x, note.y);  // Position input near the clicked note
             input.size(selectedNote.w, selectedNote.h);
@@ -367,6 +431,7 @@ function doubleTapped() {
     input.hide();
     button.hide();
     decoupleButton.hide()
+    deleteButton.hide()
 }
 
 function regenerateNote(){
@@ -387,6 +452,10 @@ function decoupleNote() {
     }
 }
 
+function deleteNote() {
+    moveToEnd(notes, notes.indexOf(selectedNote)).pop();
+}
+
 function updateNoteText() {
     if (selectedNote) {
         selectedNote.s = input.value().replace(/\n/g, ' '); // Update the note's text
@@ -397,25 +466,141 @@ function updateNoteText() {
 function drawNewNoteButton() {
     const r = 75;
 
-    fill(155, 155, 155, 125)
+    fill(205, 205, 205, 230)
     stroke(0, 0, 0, 200)
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {
-        fill(100, 100, 100, 125) 
+        fill(100, 100, 100, 230) 
     }
     circle(width - 60, height - 60, r)
     textSize(24);
     textFont('Lora');
+    stroke(0, 0, 0)
+    fill(0,0,0)
     text("+", width - 60, height - 60)
 }
 
+function drawHowToButton() {
+    const r = 75;
+
+    fill(205, 205, 205, 230)
+    stroke(0, 0, 0, 200)
+    if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
+        fill(100, 100, 100, 230) 
+    }
+    circle(width - 60, 60, r)
+    textSize(24);
+    textFont('Lora');
+    stroke(0, 0, 0)
+    fill(0,0,0)
+    textAlign(CENTER, CENTER);
+    text(openTutorial? "X":"?", width - 60, 60)
+}
+
+
+function drawTutorialOverlay() {
+    // Background for overlay with a sepia tone and rounded corners
+    fill(244, 240, 223, 230);
+    noStroke();
+    rect(60, 60, width - 120, height - 120, 25);
+  
+    // Title with vintage style
+    textAlign(CENTER, TOP);
+    textSize(36);
+    textStyle(BOLD);
+    fill(87, 59, 36);
+    text("Creative Writing with AI Note Cards", width / 2, 100);
+    textSize(24);
+    textStyle(ITALIC);
+    text("How To Use", width / 2, 140);
+  
+    // Decorative line
+    stroke(87, 59, 36, 150);
+    strokeWeight(1.5);
+    line(width / 2 - 120, 175, width / 2 + 120, 175);
+    noStroke();
+  
+    // Text alignment and font settings for instructions
+    textAlign(LEFT, TOP);
+    textSize(18);
+    fill(87, 59, 36);
+    let x = 100;
+    let y = 200;
+    let lineHeight = 30;
+  
+    // Instructions with icons and vintage color styling
+    let instructions = [
+      { icon: "🖋️", text: "Click and Drag Note Cards to Mix them using AI!" },
+      { icon: "✍️", text: "Combine Words, Sentences, and Paragraphs (but avoid merging two paragraphs!)." },
+      { icon: "📄", text: "Double-click to Edit a Note Card." },
+      { icon: "📥", text: "Move text to your Stash to save space." },
+      { icon: "✨", text: "Explore the art of creative writing with AI!" },
+    ];
+  
+    instructions.forEach((instr, i) => {
+      textSize(22);
+      text(instr.icon, x, y + i * lineHeight * 1.6);
+      textSize(18);
+      text(instr.text, x + 40, y + i * lineHeight * 1.6);
+    });
+  
+    // Section headings with warm, literary colors
+    y += instructions.length * lineHeight * 1.6 + 50;
+    textSize(20);
+    textStyle(BOLD);
+    fill(87, 59, 36);
+    text("Adding a New Card:", x, y);
+    fill(120, 87, 65);
+    textSize(18);
+    textStyle(NORMAL);
+    text("- Click the + Button in the bottom right corner, or double-click an empty spot, then edit the text on the new note.", x, y + lineHeight, width - 160);
+  
+    y += lineHeight * 2.5;
+    textSize(20);
+    textStyle(BOLD);
+    fill(87, 59, 36);
+    text("Deleting a Card:", x, y);
+    fill(120, 87, 65);
+    textSize(18);
+    textStyle(NORMAL);
+    text("- Double-click and press Delete.", x, y + lineHeight, width - 160);
+  
+    y += lineHeight * 2.5;
+    textSize(20);
+    textStyle(BOLD);
+    fill(87, 59, 36);
+    text("Regenerating Cards:", x, y);
+    fill(120, 87, 65);
+    textSize(18);
+    textStyle(NORMAL);
+    text("- Double-click and select Regenerate.", x, y + lineHeight, width - 160);
+  
+    y += lineHeight * 2.5;
+    textSize(20);
+    textStyle(BOLD);
+    fill(87, 59, 36);
+    text("Decoupling:", x, y);
+    fill(120, 87, 65);
+    textSize(18);
+    textStyle(NORMAL);
+    text("- Double-click and select Decouple to separate connected ideas.", x, y + lineHeight, width - 160);
+  
+    // Footer with instructions for toggling the overlay
+    textAlign(CENTER, CENTER);
+    fill(87, 59, 36, 200);
+    textSize(16);
+    text("Inspired By Vladimir Nabokov's Cards", width / 2, height - 70);
+  }
+
 function mousePressed() {
+
+    if (openTutorial) return
 
     selected = false;
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         // Check if mouse is over the note
-        if (mouseX >= note.x && mouseX <= note.x + note.w &&
-            mouseY >= note.y && mouseY <= note.y + note.h) {
+        if (mouseX >= note.x && mouseX <= note.x + note.w * note.sizeFac &&
+            mouseY >= note.y && mouseY <= note.y + note.h * note.sizeFac) {
             note.setMouseCoordinate();
             note.pickedUp = true;  // Pick up the note
             notes = moveToEnd(notes, i);
@@ -448,6 +633,8 @@ function touchStarted() {
     const touchY = touches[0].y
     // ----
 
+    if (openTutorial) return
+
     // Check Double Tap ---------------
     let currentTime = millis(); // Get the current time in milliseconds
 
@@ -465,8 +652,8 @@ function touchStarted() {
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         // Check if touch is over the note
-        if (touchX >= note.x && touchX <= note.x + note.w &&
-            touchY >= note.y && touchY <= note.y + note.h) {
+        if (touchX >= note.x && touchX <= note.x + note.w * note.sizeFac &&
+            touchY >= note.y && touchY <= note.y + note.h * note.sizeFac) {
             
             note.setMouseCoordinate();
             note.pickedUp = true;  // Pick up the note
@@ -492,12 +679,24 @@ function touchStarted() {
 }
 
 function mouseReleased() {
-    // New  Note
-    const r = 75;
 
+    // How To Button
+    const r = 75;
+    if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
+        openTutorial = !openTutorial;
+    }
+
+    if (openTutorial) return
+    
+    // New  Note Button
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
         let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
+    }
+
+    // TrayButton
+    if (overTrayButton()) {
+        clickTrayButton()
     }
 
     // Notes Pickup & Merge
@@ -507,11 +706,6 @@ function mouseReleased() {
             continue
         }
         else if (note.pickedUp) {
-
-            if (mouseX <= 200 && mouseY >= height - 150) {
-                moveToEnd(notes, i).pop()
-                break
-            }
 
             notes.forEach(other => {
                 if(other != note && isOverlapped(note.x, note.y, other)){
@@ -544,9 +738,15 @@ function touchEnded() {
     touch = false;
     // ----
 
-    // New  Note
+    // How To Button
     const r = 75;
+    if ((touchX - (width - 60))**2 + (touchY - (60))**2 < r**1.5) {
+        openTutorial = !openTutorial;
+    }
 
+    if (openTutorial) return
+
+    // New  Note
     if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
         let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
@@ -558,11 +758,6 @@ function touchEnded() {
             continue
         }
         else if (note.pickedUp) {
-
-            if (touchX <= 200 && touchY >= height - 150) {
-                moveToEnd(notes, i).pop()
-                break
-            }
 
             notes.forEach(other => {
                 if(other != note && isOverlapped(note.x, note.y, other)){
@@ -638,10 +833,10 @@ async function make_notes(n) {
     }
 }
 
-function drawWrappedText(s, x, y, maxWidth) {
+function drawWrappedText(s, x, y, maxWidth, sizeFac) {
     let words = s.replace(/\n/g, ' ').split(' '); // Split the text into words
     let line = ''; // Initialize an empty line
-    let lineHeight = 20; // Set line height (you can change this based on y                                     our font size)
+    let lineHeight = 20 * sizeFac; // Set line height (you can change this based on your font size)
 
     for (let i = 0; i < words.length; i++) {
         let testLine = line + words[i] + ' '; // Build the test line
@@ -696,24 +891,24 @@ function createPinBoardTexture(pg) {
 
 }
 
-function drawStickyNote(x, y, w, h, color) {
+function drawStickyNote(x, y, w, h, color, sizeFac) {
   
     // Draw the shadow for the sticky note
     fill(0, 0, 0, 50); // Semi-transparent black for the shadow
     noStroke()
-    rect(x + 10, y + 10, w, h, 10); // Shadow slightly offset
+    rect(x + (10*sizeFac), y + (10*sizeFac), w*sizeFac, h*sizeFac, 10*sizeFac); // Shadow slightly offset
 
     // Set the color for the sticky note (light yellow)
     fill(color[0], color[1], color[2], 255); // Yellow with some transparency
     stroke(color[0]+30, color[1]+30, color[2]+30); // Light gray stroke for outline
-    strokeWeight(2);
+    strokeWeight(2*sizeFac);
     
     // Draw the rectangle (sticky note)
-    rect(x, y, w, h, 2); // Rounded corners
+    rect(x, y, w*sizeFac, h*sizeFac, 2*sizeFac); // Rounded corners
 
-    strokeWeight(1);
+    strokeWeight(1*sizeFac);
     fill(0, 0, 0, 30);
-    triangle(x+w, y+h-35, x+w-35, y+h, x+w-35, y+h-35);
+    triangle(x+(w*sizeFac), y+((h-35)*sizeFac), x+((w-35)*sizeFac), y+(h*sizeFac), x+((w-35)*sizeFac), y+((h-35)*sizeFac));
 }
 
 function drawMadeFromNote(note, x, y, w, h, color) {
