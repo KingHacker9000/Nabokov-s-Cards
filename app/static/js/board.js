@@ -1,4 +1,4 @@
-let DEBUG = false;
+let DEBUG = true;
 
 let w = window.innerWidth;
 let h = window.innerHeight;
@@ -260,16 +260,25 @@ function setup() {
     corkTexture = createGraphics(windowWidth, windowHeight);
         
     // Generate the cork texture in the buffer
-    createPinBoardTexture(corkTexture);
-    notes = []
+    //loadPinBoardTexture(corkTexture);
 
-    make_notes(n=10)
+    make_notes(n=(DEBUG? 3: 10))
 
     // Create an input element for editing notes
     input = createElement('textarea');;
     input.input(updateNoteText); // Call updateNoteText function on input
     input.size(width*0.8, 32)
     //input.hide(); // Hide the input by default
+    // Apply plain styles
+    input.style('border', 'none');        // Remove border
+    input.style('outline', 'none');       // Remove outline
+    input.style('resize', 'none');        // Disable resizing
+    input.style('padding', '0');          // Remove padding
+    input.style('margin', '0');           // Remove margin
+    input.style('box-shadow', 'none');    // Remove shadow
+    input.style('background-color', 'white'); // Plain white background
+    input.style('font-family', 'monospace');  // Monospace font for a plain editor feel
+    input.style('font-size', '16px'); 
 
     // REGEN BUTTON
     button = createButton('Reg');
@@ -299,7 +308,7 @@ function setup() {
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     corkTexture = createGraphics(windowWidth, windowHeight);  // Resize the buffer
-    createPinBoardTexture(corkTexture);
+    loadPinBoardTexture(corkTexture);
     TrayWidth = width / 6
 }
 
@@ -313,7 +322,10 @@ function draw() {
     }
     
     // Pinboard Texture Image
-    image(corkTexture, 0, 0, windowWidth, windowHeight);
+    //image(corkTexture, 0, 0, width, height);
+    noStroke()
+    fill(27,27,27)
+    rect(0, 0, width, height)
 
     // Reposition Notes
     for (let i = notes.length-1; i >= 0; i--) {
@@ -362,12 +374,20 @@ function draw() {
         //----------------
     }
 
+    image(undoImage, 30, height-60, 50, 50)
+    image(redoImage, 100, height-60, 50, 50)
+
 }
 
 //Trash Image: image(trashImage, 100 - 20, height - 75 - 20, 40, 40);
 
 // Detect double click on a note
 function doubleClicked() {
+
+    if (overOtherButtons()) {
+        return
+    }
+
     for (let note of notes) {
         if (note.isMouseOver()) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
@@ -381,9 +401,10 @@ function doubleClicked() {
                 decoupleButton.hide()
             }
             deleteButton.show()
-            input.position(note.x, note.y);  // Position input near the clicked note
-            input.size(selectedNote.w * selectedNote.sizeFac, selectedNote.h * selectedNote.sizeFac);
-            input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
+            input.position(note.x+25, note.y+25);  // Position input near the clicked note
+            input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
+            //input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
+            input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
             input.value(note.s);  // Set the input value to the current note's content
             return;
         }
@@ -392,7 +413,7 @@ function doubleClicked() {
     // ONLY make new Note When NOT Pressing a Side Button
     if (mouseX < width - 150) {
         // Make new note
-        let new_note = new Note("Enter Text", mouseX, mouseY);
+        let new_note = new Paper("Enter Text", mouseX, mouseY);
         notes.push(new_note)
     }
     // selectedNote = new_note;  // Deselect if double-clicked outside of any note
@@ -421,8 +442,9 @@ function doubleTapped() {
                 deleteButton.show()
             }
             input.position(note.x, note.y);  // Position input near the clicked note
-            input.size(selectedNote.w, selectedNote.h);
-            input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
+            input.size(selectedNote.imgWidth, selectedNote.imgHeight);
+            //input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
+            input.style('background-color', 'white'); // Plain white background
             input.value(note.s);  // Set the input value to the current note's content
             return;
         }
@@ -432,6 +454,42 @@ function doubleTapped() {
     button.hide();
     decoupleButton.hide()
     deleteButton.hide()
+}
+
+function overOtherButtons() {
+    // How To Button
+    const r = 75;
+    if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
+        return true
+    }
+
+    if (openTutorial) return true
+    
+    // New  Note Button
+    if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
+        return true
+    }
+
+    // TrayButton
+    if (overTrayButton()) {
+        return true
+    }
+
+    // Undo Button
+    if (30 <= mouseX && mouseX <= 80
+        && height-60 <= mouseY  && mouseY <= height - 10
+    ) {
+        return true
+    }
+
+    // Redo Button
+    if (100 <= mouseX && mouseX <= 150
+        && height-60 <= mouseY  && mouseY <= height - 10
+    ) {
+        return true
+    }
+
+    return false
 }
 
 function regenerateNote(){
@@ -448,11 +506,15 @@ function decoupleNote() {
         notes.push(n1)
         notes.push(n2)
 
+        history.push(new HistoryDecouple(n1, n2, selectedNote))
+        historyIndex += 1
         moveToEnd(notes, notes.indexOf(selectedNote)).pop()
     }
 }
 
 function deleteNote() {
+    history.push(new HistoryDelete(selectedNote))
+    historyIndex += 1
     moveToEnd(notes, notes.indexOf(selectedNote)).pop();
 }
 
@@ -690,13 +752,35 @@ function mouseReleased() {
     
     // New  Note Button
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
-        let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
     }
 
     // TrayButton
     if (overTrayButton()) {
         clickTrayButton()
+    }
+
+    // Undo Button
+    if (historyIndex >= 0  && history.length > 0 && 30 <= mouseX && mouseX <= 80
+        && height-60 <= mouseY  && mouseY <= height - 10
+    ) {
+        if (DEBUG) {
+            console.log("UNDO", historyIndex)
+        }
+        history[historyIndex].undo()
+        historyIndex -= 1
+    }
+
+    // Redo Button
+    if (historyIndex >= -1 && history.length > 0 && 100 <= mouseX && mouseX <= 150
+        && height-60 <= mouseY  && mouseY <= height - 10
+    ) {
+        historyIndex += 1
+        if (DEBUG) {
+            console.log("REDO", historyIndex)
+        }
+        history[historyIndex].redo()
     }
 
     // Notes Pickup & Merge
@@ -708,7 +792,7 @@ function mouseReleased() {
         else if (note.pickedUp) {
 
             notes.forEach(other => {
-                if(other != note && isOverlapped(note.x, note.y, other)){
+                if(other != note && note.isOverlapped(other)){
                     //other.s += " " + note.s
                     mix_note(other, note)
 
@@ -748,7 +832,7 @@ function touchEnded() {
 
     // New  Note
     if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
-        let new_note = new Note("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
     }
 
@@ -760,7 +844,7 @@ function touchEnded() {
         else if (note.pickedUp) {
 
             notes.forEach(other => {
-                if(other != note && isOverlapped(note.x, note.y, other)){
+                if(other != note && note.isOverlapped(other)){
                     //other.s += " " + note.s
                     mix_note(other, note)
 
@@ -809,7 +893,9 @@ async function mix_note(n1, n2) {
             console.log("------------------------------------------")
         }
         // New Node
-        notes.push(new Note(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
+        notes.push(new Paper(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
+        history.push(new HistoryCouple(n1, n2, notes[notes.length-1]))
+        historyIndex += 1
 
     } catch (error) {
         console.log(error)
@@ -824,7 +910,7 @@ async function make_notes(n) {
         const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
         
         reply.split(" ").forEach(s => {
-            let n = new Note(s, random(0, width*0.5), random(0, height*0.5))
+            let n = new Paper(s, random(0, width*0.5), random(0, height*0.5))
             notes.push(n)
         });
 
@@ -862,7 +948,7 @@ function moveToEnd(arr, i) {
     return arr;
 }
 
-function createPinBoardTexture(pg) {
+function createPinBoardTexture(pg, width, height) {
     pg.fill(136, 81, 34);  // Brown colors (hue, saturation, brightness)
     pg.noStroke();
     pg.rect(0, 0, width, height);
@@ -887,8 +973,18 @@ function createPinBoardTexture(pg) {
     pg.textAlign(CENTER, CENTER);
     pg.textSize(86);
     pg.textFont('Lora');
-    pg.text("Pin Board", width/2, 60)
+    //pg.text("Pin Board", width/2, 60)
 
+}
+
+function loadPinBoardTexture(pg) {
+
+    pg.image(boardTexture, 0, 0, width, height, 0, 0, width*4, height*4);
+    pg.fill(255, 255, 255, 145);
+    pg.textAlign(CENTER, CENTER);
+    pg.textSize(86);
+    pg.textFont('Lora');
+    pg.text("Pin Board", width/2, 60)
 }
 
 function drawStickyNote(x, y, w, h, color, sizeFac) {

@@ -5,14 +5,45 @@
 {% block head %}
     <script>
       let pinImage;
+      let boardTexture;
+      let undoImage;
+      let redoImage;
+      let noteImages = [];
 
       // Load the image in preload()
       function preload() {
-        // Replace 'pinboard.jpg' with the path to your image
         pinImage = loadImage("{{ url_for('static',filename='img/pin.png') }}"); 
         trashImage = loadImage("{{ url_for('static',filename='img/trash.png') }}"); 
+        boardTexture = loadImage("{{ url_for('static',filename='img/pinboardTexture.png') }}");
+        undoImage = loadImage("{{ url_for('static',filename='img/undo.png') }}");
+        redoImage = loadImage("{{ url_for('static',filename='img/redo.png') }}");
+
+        
+        img = loadImage("{{ url_for('static',filename='img/papers/1.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/3.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/4.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/5.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/6.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/7.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/8.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/9.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/10.png') }}");
+        noteImages.push(img)
+        img = loadImage("{{ url_for('static',filename='img/papers/11.png') }}");
+        noteImages.push(img)
       }
     </script>
+
+    <script src="{{ url_for('static',filename='js/history.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/paper.js') }}"></script>
     <script src="{{ url_for('static',filename='js/tray.js') }}"></script>
     <script src="{{ url_for('static',filename='js/board.js') }}"></script>
 {% endblock %}
