@@ -38,6 +38,10 @@ let lastTouchTime = 0;
 let doubleTapThreshold = 300; // Time in milliseconds
 //----------------
 
+
+// Word Stash
+let wordStash = []
+
 const stickyNoteColors = [
     { name: "Classic Yellow", rgb: [255, 255, 153] },
     { name: "Soft Pink", rgb: [255, 182, 193] },
@@ -195,7 +199,10 @@ class Note {
         let n2 = this.madeFrom[1]
         
         try {
-            const url = window.location.href + "/combine"
+            const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+            console.log(baseUrl);  // e.g., "https://google.com"
+
+            const url = baseUrl + "/board/combine"
     
             const data = {
                 s1: n1.s,
@@ -263,6 +270,7 @@ function setup() {
     //loadPinBoardTexture(corkTexture);
 
     make_notes(n=(DEBUG? 3: 10))
+    fillWordStash(n=10)
 
     // Create an input element for editing notes
     input = createElement('textarea');;
@@ -273,12 +281,12 @@ function setup() {
     input.style('border', 'none');        // Remove border
     input.style('outline', 'none');       // Remove outline
     input.style('resize', 'none');        // Disable resizing
-    input.style('padding', '0');          // Remove padding
+    input.style('padding', '10px');          // Remove padding
     input.style('margin', '0');           // Remove margin
     input.style('box-shadow', 'none');    // Remove shadow
     input.style('background-color', 'white'); // Plain white background
     input.style('font-family', 'monospace');  // Monospace font for a plain editor feel
-    input.style('font-size', '16px'); 
+    input.style('font-size', '14px');
 
     // REGEN BUTTON
     button = createButton('Reg');
@@ -389,7 +397,7 @@ function doubleClicked() {
     }
 
     for (let note of notes) {
-        if (note.isMouseOver()) {  // Replace with your logic for detecting if a note is clicked
+        if (note.isMouseOver() && !trayNotes.includes(note)) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
             if (selectedNote.madeFrom.length > 0) {
@@ -413,7 +421,7 @@ function doubleClicked() {
     // ONLY make new Note When NOT Pressing a Side Button
     if (mouseX < width - 150) {
         // Make new note
-        let new_note = new Paper("Enter Text", mouseX, mouseY);
+        let new_note = new Paper(wordStash.pop(), mouseX, mouseY);
         notes.push(new_note)
     }
     // selectedNote = new_note;  // Deselect if double-clicked outside of any note
@@ -431,9 +439,14 @@ function doubleClicked() {
 }
 
 function doubleTapped() {
+
+    if (overOtherButtons()) {
+        return
+    }
+
     for (let note of notes) {
         if (touchLastX >= note.x && touchLastX <= note.x + note.w * note.sizeFac &&
-            touchLastY >= note.y && touchLastY <= note.y + note.h * note.sizeFac) {  // Replace with your logic for detecting if a note is clicked
+            touchLastY >= note.y && touchLastY <= note.y + note.h * note.sizeFac && !trayNotes.includes(note)) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
             if (selectedNote.madeFrom.length > 0) {
@@ -493,13 +506,16 @@ function overOtherButtons() {
 }
 
 function regenerateNote(){
-    if(selectedNote.madeFrom != [] && selected){
+    if(selectedNote.madeFrom != [] && selected && !trayNotes.includes(selectedNote) && ! TimeUp){
+        let s = selectedNote.s
         selectedNote.regenerate()
+        history.push(new HistoryRegenerate(selectedNote, s))
+        historyIndex += 1
     }
 }
 
 function decoupleNote() {
-    if(selectedNote.madeFrom != [] && selected){
+    if(selectedNote.madeFrom != [] && selected  && !trayNotes.includes(selectedNote) && !TimeUp){
         let n1 = selectedNote.madeFrom[0]
         let n2 = selectedNote.madeFrom[1]
 
@@ -657,6 +673,10 @@ function mousePressed() {
 
     if (openTutorial) return
 
+    if (wordStash.length <= 2) {
+        fillWordStash(n=10)
+    }
+
     selected = false;
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
@@ -696,6 +716,10 @@ function touchStarted() {
     // ----
 
     if (openTutorial) return
+
+    if (wordStash.length <= 2) {
+        fillWordStash(n=10)
+    }
 
     // Check Double Tap ---------------
     let currentTime = millis(); // Get the current time in milliseconds
@@ -752,7 +776,7 @@ function mouseReleased() {
     
     // New  Note Button
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
-        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
     }
 
@@ -792,8 +816,8 @@ function mouseReleased() {
         else if (note.pickedUp) {
 
             notes.forEach(other => {
-                if(other != note && note.isOverlapped(other)){
-                    //other.s += " " + note.s
+                if(other != note && note.isOverlapped(other)  && !trayNotes.includes(note) && !TimeUp){
+
                     mix_note(other, note)
 
                     moveToEnd(notes, i).pop()
@@ -832,7 +856,7 @@ function touchEnded() {
 
     // New  Note
     if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
-        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
         notes.push(new_note)
     }
 
@@ -844,7 +868,7 @@ function touchEnded() {
         else if (note.pickedUp) {
 
             notes.forEach(other => {
-                if(other != note && note.isOverlapped(other)){
+                if(other != note && note.isOverlapped(other) && !trayNotes.includes(note) && !TimeUp){
                     //other.s += " " + note.s
                     mix_note(other, note)
 
@@ -868,8 +892,13 @@ function touchEnded() {
 
 async function mix_note(n1, n2) {
 
+    if (TimeUp) return
+
     try {
-        const url = window.location.href + "/combine"
+        const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+        console.log(baseUrl);  // e.g., "https://google.com"
+
+        const url = baseUrl + "/board/combine"
 
         const data = {
             s1: n1.s,
@@ -905,13 +934,31 @@ async function mix_note(n1, n2) {
 async function make_notes(n) {
 
     try {
-        const url = window.location.href + "/notes?n=" + encodeURIComponent(n)
-        const response = await fetch(url);
-        const reply = await response.text(); // Assuming it's plain text, otherwise adjust to .json() if necessary
-        
+        const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+
+        let url = baseUrl + "/board/notes?n=" + encodeURIComponent(n)
+        let response = await fetch(url);
+        let reply = await response.text();
         reply.split(" ").forEach(s => {
             let n = new Paper(s, random(0, width*0.5), random(0, height*0.5))
             notes.push(n)
+        });
+
+    } catch (error) {
+        console.log(error)
+    }
+}
+
+async function fillWordStash(n) {
+    try {
+        const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+        
+        url = baseUrl + "/board/notes?n=" + encodeURIComponent(n)
+        response = await fetch(url);
+        reply = await response.text();
+        
+        reply.split(" ").forEach(s => {
+            wordStash.push(s)
         });
 
     } catch (error) {

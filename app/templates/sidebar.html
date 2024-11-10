@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static',filename='styles/sidebar_styles.css') }}">
+    <title>Rich Text Editor with ChatGPT Sidebar</title>
+    <!-- Quill Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
+</head>
+<body>
+    {% if timer %}
+
+    <div id="timer">10:00</div>
+    <script>
+
+      let TimeUp = false;
+
+      console.log("PILOT")
+      const timerStatus = true;
+      function startTimer(duration, display) {
+        let timer = duration, minutes, seconds;
+        const interval = setInterval(function () {
+            minutes = parseInt(timer / 60, 10);
+            seconds = parseInt(timer % 60, 10);
+
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
+
+            display.textContent = minutes + ":" + seconds;
+
+            if (--timer < 0) {
+                clearInterval(interval);
+                display.textContent = "Time's up!";
+                TimeUp = true
+            }
+        }, 1000);
+    }
+
+    if (timerStatus) {
+        document.getElementById('timer').style.display = 'block';
+        startTimer(10 * 60, document.getElementById('timer'));
+    }
+    </script>
+
+    {% endif %}
+
+    <h1>
+        ChatGPT-Assisted Editor
+    </h1>
+    <div class="container">
+        <!-- Rich Text Editor Section -->
+        <div class="editor-container">
+            <div id="editor">Type here...</div>
+        </div>
+
+        <!-- ChatGPT Sidebar Section -->
+        <div class="chatgpt-sidebar">
+            <h2>ChatGPT Sidebar</h2>
+            <div id="log"></div>
+
+            <!-- Input for ChatGPT prompt -->
+            <div class="input-section">
+                <input id="prompt" type="text" placeholder="Enter prompt here..." />
+                <button onclick="submitPrompt()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quill JS -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        // Initialize Quill rich text editor
+        const quill = new Quill('#editor', {
+            theme: 'snow'
+        });
+
+        // Function to fetch and display chat logs
+        async function submitPrompt() {
+            const promptInput = document.getElementById("prompt");
+            const promptText = promptInput.value.trim();
+            if (!promptText || TimeUp) return;
+
+            const logContainer = document.getElementById("log");
+
+            // Display user prompt in chat log
+            logContainer.innerHTML += `<div class="chatgpt-message">${promptText}</div>`;
+            promptInput.value = "";  // Clear input after submission
+
+            try {
+                // Send prompt to server and fetch response
+                const response = await fetch(`/chat?text=${encodeURIComponent(promptText)}`);
+                const reply = await response.text(); // Assuming plain text response
+
+                // Display ChatGPT response in chat log
+                logContainer.innerHTML += `<div class="chatgpt-message chatgpt-response">${reply}</div>`;
+            } catch (error) {
+                // Handle errors by displaying an error message
+                logContainer.innerHTML += `<div class="chatgpt-message error">Error fetching reply: ${error.message}</div>`;
+            }
+
+            // Scroll to the latest message
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+    </script>
+</body>
+</html>

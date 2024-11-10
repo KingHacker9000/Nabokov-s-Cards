@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, session, send_file, redirect,
 import os
 import openai
 from dotenv import load_dotenv
-from GPT_wrapper import get_response
+from GPT_wrapper import get_response, generate_words
 
 load_dotenv(override=True)
 
@@ -17,7 +17,7 @@ openai.api_key = os.environ['OPENAI_API_KEY']
 # Home Directory
 @app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template("sidebar.html", timer=True)
  
 @app.route('/chat', methods=["GET", 'POST'])
 def chat():
@@ -39,6 +39,10 @@ def chat():
 @app.route("/board")
 def board():
     return render_template("board.html")
+
+@app.route("/board/pilot")
+def pilot_board():
+    return render_template("board.html", timer=True)
 
 @app.route("/board/combine", methods=["POST"])
 def combine():
@@ -96,27 +100,8 @@ def combine():
 @app.route("/board/notes")
 def words():
     n: str = request.args.get('n')
+    return generate_words(n)
 
-    completion = openai.chat.completions.create(
-        model="chatgpt-4o-latest",
-        messages=[
-            {
-                "role": "system",
-                "content": "You are a creative assistant that helps gives creative and imaginative words. No other text is required."
-            },
-            {
-                "role": "user",
-                "content": f"Give me only {n} words, no punctuations, no repetitions, each split only by a space. Only nouns."
-            }
-        ],
-        temperature=1,
-        max_tokens=256,
-        top_p=1,
-        frequency_penalty=0,
-        presence_penalty=0
-    )
-
-    return completion.choices[0].message.content
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)

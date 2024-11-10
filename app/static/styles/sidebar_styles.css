@@ -1,0 +1,136 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #212121;
+    color: #fff;
+    flex-direction: column;
+}
+
+.container {
+    display: flex;
+    width: 80%;
+    height: 80vh;
+    border: 1px solid #333;
+    border-radius: 8px;
+    overflow: hidden;
+    color: #fff;
+    background-color: #424242;
+    box-shadow: 10px 5px 5px rgb(37, 37, 37);
+    margin-top: 3vh;
+}
+
+/* Rich text editor styles */
+.editor-container {
+    flex: 3;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ddd;
+    padding: 10px;
+}
+
+#editor {
+    flex: 1;
+    background: #424242;
+    padding: 10px;
+    border-radius: 4px;
+    color: #fff;
+}
+
+/* ChatGPT sidebar styles */
+.chatgpt-sidebar {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    overflow-y: auto;
+    background-color: #424242;
+}
+
+.chatgpt-sidebar h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.chatgpt-message {
+    margin-bottom: 10px;
+    padding: 8px;
+    border-radius: 4px;
+    background-color: #e0f7fa;
+    color: #333;
+}
+
+.chatgpt-response {
+    background-color: #e8f5e9;
+}
+
+.input-section {
+    display: flex;
+    margin-top: 10px;
+}
+
+.input-section input {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.input-section button {
+    padding: 8px 12px;
+    margin-left: 8px;
+    background-color: #2196f3;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.input-section button:hover {
+    background-color: #1976d2;
+}
+
+/* Custom styling for Quill toolbar */
+.ql-toolbar.ql-snow {
+    background-color: #333; /* Change this to your preferred color */
+    border: 1px solid #444; /* Border color */
+    color: #fff; /* Text/icon color */
+}
+
+/* Change button color */
+.ql-toolbar .ql-picker-label, .ql-toolbar .ql-picker-item {
+    color: #fff; /* Color for dropdown items */
+}
+
+.ql-toolbar .ql-stroke {
+    stroke: #fff; /* Color for toolbar icons */
+}
+
+.ql-toolbar .ql-fill {
+    fill: #fff; /* Color for toolbar fill icons */
+}
+
+/* Add hover effect for toolbar buttons */
+.ql-toolbar .ql-picker-label:hover, .ql-toolbar .ql-picker-item:hover,
+.ql-toolbar button:hover {
+    color: #bbb; /* Hover color for icons and text */
+}
+
+/* Optional: Customize active toolbar button */
+.ql-toolbar .ql-active {
+    color: #4CAF50; /* Active color for toolbar buttons */
+}
+
+/* Optional: Customize dropdown background */
+.ql-toolbar .ql-picker-options {
+    background-color: #333; /* Dropdown background color */
+}

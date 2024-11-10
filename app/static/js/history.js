@@ -75,3 +75,20 @@ class HistoryDelete extends HistoryAction {
         moveToEnd(notes, notes.indexOf(this.note)).pop()
     }
 }
+
+class HistoryRegenerate extends HistoryAction {
+    constructor(note, old_text) {
+        super()
+        this.note = note
+        this.old_text = old_text
+        this.text = note.s
+    }
+
+    undo () {
+        this.note = this.old_text
+    }
+
+    redo () {
+        this.note = this.text
+    }
+}

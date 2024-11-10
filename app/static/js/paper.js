@@ -106,7 +106,7 @@ class Paper {
         fill(0, 0, 0, 50); // Semi-transparent black for the overlay
         stroke(0, 0, 0, 100);
         notes.forEach(note => {
-            if (note != this && this.isOverlapped(note)){
+            if (note != this && this.isOverlapped(note) && !trayNotes.includes(note)){
                 note.drawNote()
                 fill(0, 0, 0, 50); // Semi-transparent black for the overlay
                 stroke(0, 0, 0, 100);
@@ -136,7 +136,10 @@ class Paper {
         let n2 = this.madeFrom[1]
         
         try {
-            const url = window.location.href + "/combine"
+            const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+            console.log(baseUrl);
+
+            const url = baseUrl + "/board/combine"
     
             const data = {
                 s1: n1.s,
