@@ -51,13 +51,14 @@
 
 {% block body %}
 
+<script>
+  let TimeUp = false
+</script>
 
 {% if timer %}
 
     <div id="timer">10:00</div>
     <script>
-
-      let TimeUp = false;
 
       console.log("PILOT")
       const timerStatus = true;
