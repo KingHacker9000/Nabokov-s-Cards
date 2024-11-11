@@ -17,6 +17,7 @@ let emptyHand = true;
 let notes = [];
 let touch = false
 let input;
+let inputElement;
 let button;
 let decoupleButton;
 let deleteButton;
@@ -287,6 +288,8 @@ function setup() {
     input.style('background-color', 'white'); // Plain white background
     input.style('font-family', 'monospace');  // Monospace font for a plain editor feel
     input.style('font-size', '14px');
+    input.id('input')
+    inputElement = document.getElementById('input')
 
     // REGEN BUTTON
     button = createButton('Reg');
@@ -400,6 +403,7 @@ function doubleClicked() {
         if (note.isMouseOver() && !trayNotes.includes(note)) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
+            copy_text()
             if (selectedNote.madeFrom.length > 0) {
                 button.show();
                 decoupleButton.show()
@@ -449,6 +453,7 @@ function doubleTapped() {
             touchLastY >= note.y && touchLastY <= note.y + note.h * note.sizeFac && !trayNotes.includes(note)) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
+            copy_text()
             if (selectedNote.madeFrom.length > 0) {
                 button.show();
                 decoupleButton.show()
@@ -467,6 +472,22 @@ function doubleTapped() {
     button.hide();
     decoupleButton.hide()
     deleteButton.hide()
+}
+
+function copy_text(){
+    window.setTimeout(()=>{
+        inputElement.focus();
+        inputElement.select();
+        navigator.clipboard.writeText(inputElement.value)
+        .then(() => {
+            console.log('Text copied to clipboard successfully!');
+        })
+        .catch((err) => {
+            console.error('Failed to copy text: ', err);
+        });
+
+    }, 20)
+    
 }
 
 function overOtherButtons() {
