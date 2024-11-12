@@ -291,21 +291,38 @@ function setup() {
     input.id('input')
     inputElement = document.getElementById('input')
 
-    // REGEN BUTTON
-    button = createButton('Reg');
+    // REGEN Button
+    button = createButton('');
     button.size(40, 32);
+    // Use CSS to add the image as the button's background
+    button.style('background-image', `url(${regenImage})`);
+    button.style('background-size', 'cover'); // Makes the image cover the button
+    button.style('border', 'none'); // Optional: Remove button border
+    button.elt.style.backgroundColor = 'transparent';
 
     button.mousePressed(regenerateNote);
     button.hide()
 
-    decoupleButton = createButton('DC');
+    // DECOUPLE Button
+    decoupleButton = createButton('');
     decoupleButton.size(40, 32);
+    // Use CSS to add the image as the button's background
+    decoupleButton.style('background-image', `url(${DCImage})`);
+    decoupleButton.style('background-size', 'cover'); // Makes the image cover the button
+    decoupleButton.style('border', 'none'); // Optional: Remove button border
+    decoupleButton.elt.style.backgroundColor = 'transparent';
 
     decoupleButton.mousePressed(decoupleNote);
     decoupleButton.hide();
 
-    deleteButton = createButton('Del');
+    // DELETE Button
+    deleteButton = createButton('');
     deleteButton.size(40, 32);
+    // Use CSS to add the image as the button's background
+    deleteButton.style('background-image', `url(${delImage})`);
+    deleteButton.style('background-size', 'cover'); // Makes the image cover the button
+    deleteButton.style('border', 'none'); // Optional: Remove button border
+    deleteButton.elt.style.backgroundColor = 'transparent';
 
     deleteButton.mousePressed(deleteNote);
     deleteButton.hide();
@@ -367,10 +384,11 @@ function draw() {
     // Note Buttons
     if (selectedNote && selected) {
         spaceAround = 5
-        xstart = selectedNote.x + (selectedNote.w * selectedNote.sizeFac / 2) - (spaceAround + 60) * selectedNote.sizeFac
-        button.position(xstart + 80 * selectedNote.sizeFac + (2*spaceAround), selectedNote.y + (selectedNote.h - 34)*selectedNote.sizeFac);
-        decoupleButton.position(xstart+ spaceAround + 40 * selectedNote.sizeFac, selectedNote.y + (selectedNote.h - 34)*selectedNote.sizeFac)
-        deleteButton.position(xstart, selectedNote.y + (selectedNote.h - 34)*selectedNote.sizeFac)
+        const negHeight = 34 * (1 + selectedNote.imgHeight/500)
+        xstart = selectedNote.x + (selectedNote.imgWidth * selectedNote.sizeFac / 2) - (spaceAround + 60) * selectedNote.sizeFac
+        button.position(xstart + 80 * selectedNote.sizeFac + (2*spaceAround), selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac);
+        decoupleButton.position(xstart+ spaceAround + 40 * selectedNote.sizeFac, selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac)
+        deleteButton.position(xstart, selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac)
     }
     else {
         button.hide()
