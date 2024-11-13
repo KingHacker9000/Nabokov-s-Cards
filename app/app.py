@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, send_file, redirect, jsonify
+from flask import Flask, render_template, request, session, send_file, redirect, jsonify, Response
 import os
 import openai
 from dotenv import load_dotenv
@@ -102,6 +102,10 @@ def words():
     n: str = request.args.get('n')
     return generate_words(n)
 
+@app.route('/loaderio-83a1a4d80c8eb84f33231f300b44e350.txt')
+def serve_verification_file():
+    content = "loaderio-83a1a4d80c8eb84f33231f300b44e350"
+    return Response(content, mimetype='text/plain')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)
