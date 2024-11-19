@@ -136,10 +136,9 @@ def download_file():
     # Send the file from the same directory as app.py
     return send_from_directory(directory='.', path='UserInteractions.db', as_attachment=True)
 
-
 @app.route('/database')
-def check_database():
-    return DB.DB.execute("SELECT * FROM Users;")[0]
+def database_execute():
+    return DB.DB.execute(request.args.get("command", "SELECT * FROM Users;"))[0]
 
 if __name__ == '__main__':
     
