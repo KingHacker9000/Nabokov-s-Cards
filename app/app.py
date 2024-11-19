@@ -43,7 +43,7 @@ def chat():
         if text is None:
             return "Error"
 
-    reply = get_response("You are a Creative Writer.", f"Reply to the following conversation: {text}", "gpt-3.5-turbo")
+    reply = get_response("You are a Creative Writer.", f"Reply to the following conversation: {text}", "gpt-4o-mini")
 
     if request.method == "POST":
         return render_template("chat.html", text=reply)

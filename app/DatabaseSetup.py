@@ -65,14 +65,14 @@ def add_user(user_name):
     user_result, status = db.execute("INSERT INTO Users (user_name) VALUES (?) RETURNING user_id;", (user_name,))
     print(f"User {user_result[0]['user_id']} added.")
 
-add_user('Ash')
+#add_user('Ash')
 
 if __name__ == "__main__":
     # Add a sample user
     
     import json
 
-    s = json.dumps(db.execute("SELECT * FROM Cards WHERE interaction_id=5;")[0], indent=2)
+    s = json.dumps(db.execute("SELECT * FROM Users;")[0], indent=2)
 
     print(s)
 
