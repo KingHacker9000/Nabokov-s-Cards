@@ -39,6 +39,9 @@ let lastTouchTime = 0;
 let doubleTapThreshold = 300; // Time in milliseconds
 //----------------
 
+let Editing = false;
+let Original_Edit;
+
 
 // Word Stash
 let wordStash = []
@@ -287,7 +290,7 @@ function setup() {
     input.style('box-shadow', 'none');    // Remove shadow
     input.style('background-color', 'white'); // Plain white background
     input.style('font-family', 'monospace');  // Monospace font for a plain editor feel
-    input.style('font-size', '14px');
+    input.style('font-size', '12px');
     input.id('input')
     inputElement = document.getElementById('input')
 
@@ -421,7 +424,11 @@ function doubleClicked() {
         if (note.isMouseOver() && !trayNotes.includes(note)) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
-            copy_text()
+
+            Editing = true;
+            original_text = selectedNote.s;
+
+            //copy_text()
             if (selectedNote.madeFrom.length > 0) {
                 button.show();
                 decoupleButton.show()
@@ -444,6 +451,9 @@ function doubleClicked() {
     if (mouseX < width - 150) {
         // Make new note
         let new_note = new Paper(wordStash.pop(), mouseX, mouseY);
+        Interactions.push({
+            "event": "ADD"
+        })
         notes.push(new_note)
     }
     // selectedNote = new_note;  // Deselect if double-clicked outside of any note
@@ -453,6 +463,19 @@ function doubleClicked() {
     // deleteButton.show()
 
     // Dont Select New Note
+    if (Editing && original_text!=selectedNote.s) {
+        Interactions.push({
+            "event": "EDIT",
+            "cards": [
+                {
+                    "original_text": original_text,
+                    "final_text": selectedNote.s,
+                    "words": selectedNote.get_words()
+                }
+            ]
+        })
+    }
+    Editing = false
     selectedNote = null;
     input.hide();
     button.hide();
@@ -471,7 +494,11 @@ function doubleTapped() {
             touchLastY >= note.y && touchLastY <= note.y + note.h * note.sizeFac && !trayNotes.includes(note)) {  // Replace with your logic for detecting if a note is clicked
             selectedNote = note;
             input.show();
-            copy_text()
+
+            Editing = true;
+            original_text = selectedNote.s;
+
+            // copy_text()
             if (selectedNote.madeFrom.length > 0) {
                 button.show();
                 decoupleButton.show()
@@ -485,6 +512,19 @@ function doubleTapped() {
             return;
         }
     }
+    if (Editing && original_text!=selectedNote.s) {
+        Interactions.push({
+            "event": "EDIT",
+            "cards": [
+                {
+                    "original_text": original_text,
+                    "final_text": selectedNote.s,
+                    "words": selectedNote.get_words()
+                }
+            ]
+        })
+    }
+    Editing = false
     selectedNote = null;  // Deselect if double-clicked outside of any note
     input.hide();
     button.hide();
@@ -561,6 +601,22 @@ function decoupleNote() {
         notes.push(n1)
         notes.push(n2)
 
+        Interactions.push({
+            "event": "DECOUPLE",
+            "cards": [
+                {
+                    "original_text": selectedNote.s,
+                    "final_text": n1.s,
+                    "words": n1.get_words()
+                },
+                {
+                    "original_text": selectedNote.s,
+                    "final_text": n2.s,
+                    "words": n2.get_words()
+                }
+            ]
+        })
+
         history.push(new HistoryDecouple(n1, n2, selectedNote))
         historyIndex += 1
         moveToEnd(notes, notes.indexOf(selectedNote)).pop()
@@ -568,6 +624,9 @@ function decoupleNote() {
 }
 
 function deleteNote() {
+    Interactions.push({
+        "event": "DELETE"
+    })
     history.push(new HistoryDelete(selectedNote))
     historyIndex += 1
     moveToEnd(notes, notes.indexOf(selectedNote)).pop();
@@ -736,6 +795,19 @@ function mousePressed() {
     }
 
     if(!selected){
+        if (Editing && original_text!=selectedNote.s) {
+            Interactions.push({
+                "event": "EDIT",
+                "cards": [
+                    {
+                        "original_text": original_text,
+                        "final_text": selectedNote.s,
+                        "words": selectedNote.get_words()
+                    }
+                ]
+            })
+        }
+        Editing = false
         selectedNote = null;
         input.hide()
     }
@@ -794,6 +866,19 @@ function touchStarted() {
     }
 
     if(!selected){
+        if (Editing && original_text!=selectedNote.s) {
+            Interactions.push({
+                "event": "EDIT",
+                "cards": [
+                    {
+                        "original_text": original_text,
+                        "final_text": selectedNote.s,
+                        "words": selectedNote.get_words()
+                    }
+                ]
+            })
+        }
+        Editing = false
         selectedNote = null;
         input.hide()
     }
@@ -816,6 +901,9 @@ function mouseReleased() {
     // New  Note Button
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
         let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
+        Interactions.push({
+            "event": "ADD"
+        })
         notes.push(new_note)
     }
 
@@ -831,6 +919,9 @@ function mouseReleased() {
         if (DEBUG) {
             console.log("UNDO", historyIndex)
         }
+        Interactions.push({
+            "event": "UNDO"
+        })
         history[historyIndex].undo()
         historyIndex -= 1
     }
@@ -843,6 +934,9 @@ function mouseReleased() {
         if (DEBUG) {
             console.log("REDO", historyIndex)
         }
+        Interactions.push({
+            "event": "REDO"
+        })
         history[historyIndex].redo()
     }
 
@@ -896,6 +990,9 @@ function touchEnded() {
     // New  Note
     if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
         let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
+        Interactions.push({
+            "event": "ADD"
+        })
         notes.push(new_note)
     }
 
@@ -962,6 +1059,21 @@ async function mix_note(n1, n2) {
         }
         // New Node
         notes.push(new Paper(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
+        Interactions.push({
+            "event": "COMBINE",
+            "cards": [
+                {
+                    "original_text": n1.s,
+                    "final_text": reply.s,
+                    "words": n1.get_words()
+                },
+                {
+                    "original_text": n2.s,
+                    "final_text": reply.s,
+                    "words": n2.get_words()
+                }
+            ]
+        })
         history.push(new HistoryCouple(n1, n2, notes[notes.length-1]))
         historyIndex += 1
 

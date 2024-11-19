@@ -92,4 +92,62 @@
     </script>
 
 {% endif %}
+
+{% if log %}
+
+    <script>
+
+      let Interactions = [{
+            "event": "DECOUPLE",
+            "cards": [
+                {
+                    "original_text": "Hello World, Goodbye Mars!",
+                    "final_text": "Hello World",
+                    "words": ["Hello", "World"]
+                },
+                {
+                    "original_text": "Hello World, Goodbye Mars!",
+                    "final_text": "Bye Mars",
+                    "words": ["Bye", "Mars"]
+                }
+            ]
+        }
+      ]
+
+      async function updateLog(){
+
+        if (Interactions.length == 0) {
+          return
+        }
+        
+        try {
+            const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
+
+            const url = baseUrl + "/board/update"
+    
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(Interactions)
+            });
+            Interactions = []
+            const reply = await response.json();
+            console.log(reply)
+    
+        } catch (error) {
+            console.log(error)
+        }
+
+      }
+
+      window.setInterval(() => {
+        console.log("UPDATING LOG!")
+        updateLog()
+      },60000)
+
+    </script>
+
+{% endif %}
 {% endblock %}

@@ -1,8 +1,12 @@
-from flask import Flask, render_template, request, session, send_file, redirect, jsonify, Response
+from flask import Flask, render_template, request, session, send_file, redirect, jsonify, Response, send_from_directory
+from flask_session import Session
+from tempfile import mkdtemp
 import os
 import openai
 from dotenv import load_dotenv
 from GPT_wrapper import get_response, generate_words
+
+from DBHelper import LoggerDB
 
 load_dotenv(override=True)
 
@@ -11,6 +15,15 @@ app = Flask(__name__)
 
 # Use the PORT environment variable, or default to port 5000
 port = int(os.getenv("PORT", 5000))
+
+# Configure session to use filesystem (instead of signed cookies)
+app.config["SESSION_FILE_DIR"] = mkdtemp()
+app.config["SESSION_PERMANENT"] = False
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
+
+# Database
+DB = LoggerDB()
 
 openai.api_key = os.environ['OPENAI_API_KEY']
 
@@ -38,6 +51,10 @@ def chat():
 
 @app.route("/board")
 def board():
+    if request.args.get("uid"):
+        session['session_id'] = DB.new_session(request.args["uid"])
+        session['user_id'] = request.args["uid"]
+        return render_template("board.html", log=True)
     return render_template("board.html")
 
 @app.route("/board/pilot")
@@ -96,16 +113,29 @@ def combine():
     
     return jsonify({"s": "Error: Unable to Mix 2 Paragraphs", "type": "sentence"}), 200
 
-
 @app.route("/board/notes")
 def words():
     n: str = request.args.get('n')
     return generate_words(n)
 
-@app.route('/loaderio-83a1a4d80c8eb84f33231f300b44e350.txt')
-def serve_verification_file():
-    content = "loaderio-83a1a4d80c8eb84f33231f300b44e350"
-    return Response(content, mimetype='text/plain')
+@app.route("/board/update", methods=['POST'])
+def update_log():
+    events = request.get_json()
+    for event in events:
+        DB.log_interaction(event, session['user_id'], session['session_id'])
+    
+    return jsonify({"Code": "200"})
+
+# @app.route('/loaderio-83a1a4d80c8eb84f33231f300b44e350.txt')
+# def serve_verification_file():
+#     content = "loaderio-83a1a4d80c8eb84f33231f300b44e350"
+#     return Response(content, mimetype='text/plain')
+
+@app.route('/download/database')
+def download_file():
+    # Send the file from the same directory as app.py
+    return send_from_directory(directory='.', path='UserInteractions.db', as_attachment=True)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=port)

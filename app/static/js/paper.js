@@ -36,6 +36,9 @@ class Paper {
             this.sizeFac = map(min((this.x + this.w - width + TrayWidth), this.w), 0, this.w, 1, 0.5)
 
             if (this.sizeFac == 0.5 && !trayNotes.includes(this)) {
+                Interactions.push({
+                    "event": "STASH"
+                })
                 trayNotes.push(this)
             }
         }
@@ -87,6 +90,27 @@ class Paper {
         }
 
         return this.madeFrom[0].stackSize() + this.madeFrom[1].stackSize()
+    }
+
+    get_words() {
+        if (this.madeFrom.length == 0) {
+            return [this.s]
+        }
+        let words = []
+
+        let w1 = this.madeFrom[0].get_words()
+
+        for (let i = 0; i < w1; i++) {
+            words.push(w1[i])
+        }
+
+        let w2 = this.madeFrom[1].get_words()
+
+        for (let i = 0; i < w2; i++) {
+            words.push(w2[i])
+        }
+
+        return words
     }
 
     setCoordinate(){
