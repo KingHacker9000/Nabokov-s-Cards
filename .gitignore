@@ -1,3 +1,4 @@
 virtualenv/
 .env
 app/UserInteractions.db
+app/__pycache__/
