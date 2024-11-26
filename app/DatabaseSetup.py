@@ -58,6 +58,30 @@ db.execute("""
     );
 """)
 
+# Favourites Table
+db.execute("""
+    CREATE TABLE Favourites (
+    favourite_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    interaction_id INTEGER,
+    FOREIGN KEY(user_id) REFERENCES Users(user_id),
+    FOREIGN KEY(interaction_id) REFERENCES Interactions(interaction_id)
+);
+""")
+
+# Unfavourites Table
+db.execute("""
+    CREATE TABLE Unfavourites (
+    unfavourite_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    text TEXT NOT NULL,
+    user_id INTEGER NOT NULL,
+    interaction_id INTEGER,
+    FOREIGN KEY(user_id) REFERENCES Users(user_id),
+    FOREIGN KEY(interaction_id) REFERENCES Interactions(interaction_id)
+);
+""")
+
 # Step 2: Insert Functions for Logging Data
 
 def add_user(user_name):

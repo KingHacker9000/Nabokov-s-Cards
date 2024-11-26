@@ -330,7 +330,6 @@ function setup() {
     deleteButton.mousePressed(deleteNote);
     deleteButton.hide();
 
-
     // Tray Setup
     TrayWidth = width / 6
 
@@ -347,13 +346,16 @@ function draw() {
 
     // Tutorial Slide Pauses Rest of the Program
     if (openTutorial) {
+        // Draw Notes
+        notes.forEach(note => {
+            note.drawNote()
+            note.carnation.hide()
+        });
         drawTutorialOverlay()
         drawHowToButton()
         return
     }
     
-    // Pinboard Texture Image
-    //image(corkTexture, 0, 0, width, height);
     noStroke()
     fill(27,27,27)
     rect(0, 0, width, height)
@@ -450,17 +452,27 @@ function doubleClicked() {
     // ONLY make new Note When NOT Pressing a Side Button
     if (mouseX < width - 150) {
         // Make new note
-        let new_note = new Paper(wordStash.pop(), mouseX, mouseY);
+        // let new_note = new Paper(wordStash.pop(), mouseX, mouseY);
+        let new_note = new Paper("Enter Text", mouseX, mouseY);
+        selectedNote = new_note;
+        input.show();
+        Editing = true;
+        original_text = selectedNote.s;
+        button.hide();
+        decoupleButton.hide()
+        selected = true
+        deleteButton.show()
+        input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
+        input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
+        input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
+        input.value(selectedNote.s);  // Set the input value to the current note's content
         Interactions.push({
             "event": "ADD"
         })
         notes.push(new_note)
+        console.log(selectedNote.s)
+        return;
     }
-    // selectedNote = new_note;  // Deselect if double-clicked outside of any note
-    // input.show();
-    // button.show();
-    // decoupleButton.show()
-    // deleteButton.show()
 
     // Dont Select New Note
     if (Editing && original_text!=selectedNote.s) {
@@ -474,9 +486,9 @@ function doubleClicked() {
                 }
             ]
         })
+        selectedNote = null;
     }
     Editing = false
-    selectedNote = null;
     input.hide();
     button.hide();
     decoupleButton.hide()
@@ -620,6 +632,7 @@ function decoupleNote() {
         history.push(new HistoryDecouple(n1, n2, selectedNote))
         historyIndex += 1
         moveToEnd(notes, notes.indexOf(selectedNote)).pop()
+        selectedNote.carnation.hide()
     }
 }
 
@@ -630,6 +643,7 @@ function deleteNote() {
     history.push(new HistoryDelete(selectedNote))
     historyIndex += 1
     moveToEnd(notes, notes.indexOf(selectedNote)).pop();
+    selectedNote.carnation.hide()
 }
 
 function updateNoteText() {
@@ -672,8 +686,62 @@ function drawHowToButton() {
     text(openTutorial? "X":"?", width - 60, 60)
 }
 
-
 function drawTutorialOverlay() {
+    // Popup background
+    fill(25, 25, 25, 210); // Black background with slight transparency
+    rectMode(CENTER);
+    rect(width / 2, height / 2, width*0.9, height*0.9, 20); // Rounded rectangle
+  
+    // Headline text
+    textAlign(CENTER, CENTER);
+    fill(255); // White text
+    textSize(32);
+    text("How to use", width *0.7, height *0.1);
+  
+    // Subheadings
+    textSize(20);
+    let options = [
+      "Adding new cards",
+      "Card Options",
+      "Merging cards",
+      "Decoupling cards",
+      "Regenerating cards",
+      "Editing cards",
+    ];
+    let ImagesList = [
+        newTImage,
+        copyTImage,
+        editTImage,
+        decoupleTImage,
+        decoupleTImage,
+        stashTImage
+    ]
+  
+    let yOffset = 0.2*height;
+    let dy = (0.6*height/(options.length))
+    imageMode(CENTER)
+    for (let i = 0; i < options.length; i++) {
+      text(options[i], width *0.7, yOffset);
+      let ImageHSize = dy*0.8
+      image(ImagesList[i], width*0.7, yOffset + dy/2, ImagesList[i].width*(ImageHSize/ImagesList[i].height), ImageHSize)
+      yOffset += dy*1.2;
+    }
+  
+    // Image
+    let imgX = width *0.3; // Position of the image
+    let imgY = height / 2;
+    let imgSize = width*0.2; // Size of the image
+  
+    // Draw a placeholder for the image
+    fill(150); // Gray placeholder
+    image(NabokovImage, imgX, imgY, imgSize, NabokovImage.height*(imgSize/NabokovImage.width))
+    fill(0);
+    textSize(14);
+    rectMode(CORNER);
+    imageMode(CORNER)
+  }
+
+function drawTutorialOverlayOld() {
     // Background for overlay with a sepia tone and rounded corners
     fill(244, 240, 223, 230);
     noStroke();
@@ -900,7 +968,8 @@ function mouseReleased() {
     
     // New  Note Button
     if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
-        let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
+        // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
+        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
         Interactions.push({
             "event": "ADD"
         })
@@ -954,11 +1023,13 @@ function mouseReleased() {
                     mix_note(other, note)
 
                     moveToEnd(notes, i).pop()
+                    note.carnation.hide()
 
                     for (let j = 0; j < notes.length; j++) {
                         const n = notes[j];
                         if(n.s == other.s){
                             moveToEnd(notes, j).pop()
+                            other.carnation.hide()
                             break
                         }
                     }
@@ -989,7 +1060,8 @@ function touchEnded() {
 
     // New  Note
     if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
-        let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
+        // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
+        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
         Interactions.push({
             "event": "ADD"
         })
@@ -1009,11 +1081,13 @@ function touchEnded() {
                     mix_note(other, note)
 
                     moveToEnd(notes, i).pop()
+                    note.carnation.hide()
 
                     for (let j = 0; j < notes.length; j++) {
                         const n = notes[j];
                         if(n.s == other.s){
-                            moveToEnd(notes, j).pop()
+                            moveToEnd(notes, j).pop()   
+                            other.carnation.hide()
                             break
                         }
                     }
@@ -1058,7 +1132,20 @@ async function mix_note(n1, n2) {
             console.log("------------------------------------------")
         }
         // New Node
-        notes.push(new Paper(reply.s, n1.x, n1.y, reply.type, [n1, n2]))
+        new_note = new Paper(reply.s, n1.x, n1.y, reply.type, [n1, n2])
+        notes.push(new_note)
+        selectedNote = new_note;
+        input.show();
+        Editing = true;
+        original_text = selectedNote.s;
+        button.show();
+        decoupleButton.show()
+        selected = true
+        deleteButton.show()
+        input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
+        input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
+        input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
+        input.value(selectedNote.s);  // Set the input value to the current note's content
         Interactions.push({
             "event": "COMBINE",
             "cards": [

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session, send_file, redirect, jsonify, Response, send_from_directory
+import json
 from flask_session import Session
 from tempfile import mkdtemp
 import os
@@ -54,8 +55,9 @@ def board():
     if request.args.get("uid"):
         session['session_id'] = DB.new_session(request.args["uid"])
         session['user_id'] = request.args["uid"]
-        return render_template("board.html", log=True)
-    return render_template("board.html")
+        favourite_list = DB.get_favourites(request.args["uid"])
+        return render_template("board.html", log=True, favourites=json.dumps(favourite_list))
+    return render_template("board.html", favourites=json.dumps([]))
 
 @app.route("/board/pilot")
 def pilot_board():

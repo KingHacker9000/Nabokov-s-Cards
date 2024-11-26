@@ -24,6 +24,16 @@ class LoggerDB:
             print(f"An error occurred: {e}")
             return None
         
+    def get_favourites(self, user_id: str) -> list[str]:
+        query, status = self.DB.execute("""SELECT f.text
+            FROM Favourites f
+            LEFT JOIN Unfavourites u
+            ON f.text = u.text AND f.user_id = u.user_id
+            WHERE f.user_id = ? AND u.unfavourite_id IS NULL;
+            """, (user_id,))
+        print(query)
+        return [row["text"] for row in query] if query else []
+        
     def log_interaction(self, interaction, user_id, session_id):
         try:
             # Insert into Interactions table and retrieve interaction_id
@@ -63,6 +73,16 @@ class LoggerDB:
                             "INSERT INTO Words (word, card_id) VALUES (?, ?);",
                             (word, card_id)
                         )
+            elif interaction["event"] == "LIKE":
+                card_result, status = self.DB.execute(
+                    "INSERT INTO Favourites (text, user_id, interaction_id) VALUES (?, ?, ?);",
+                    (interaction["text"], user_id, interaction_id)
+                )
+            elif interaction["event"] == "UNLIKE":
+                card_result, status = self.DB.execute(
+                    "INSERT INTO Unfavourites (text, user_id, interaction_id) VALUES (?, ?, ?);",
+                    (interaction["text"], user_id, interaction_id)
+                )
 
             return interaction_id
 
@@ -99,9 +119,6 @@ if __name__ == "__main__":
     }
     db.log_interaction(interaction_decouple, 1, 2)
 
-    import time
-    time.sleep(2)
-
     # Sample interaction data for COMBINE event
     interaction_combine = {
         "event": "COMBINE",
@@ -119,8 +136,6 @@ if __name__ == "__main__":
         ]
     }
     db.log_interaction(interaction_combine, 1, 2)
-
-    time.sleep(3)
 
     # Sample interaction data for EDIT event
     interaction_edit = {

@@ -3,6 +3,9 @@
 {% block title %} Board {% endblock %}
 
 {% block head %}
+
+    <span id="favourites" style="display: none;">{{ favourites }}</span>
+
     <script>
       let pinImage;
       let boardTexture;
@@ -10,6 +13,9 @@
       let redoImage;
       let noteImages = [];
       let pilot = "{{pilot}}"
+      // Pass the Python list to JavaScript
+      let Favourites = JSON.parse(document.getElementById("favourites").innerText); //Ignore Error
+      console.log(Favourites);
 
       // Load the image in preload()
       function preload() {
@@ -18,11 +24,20 @@
         boardTexture = loadImage("{{ url_for('static',filename='img/pinboardTexture.png') }}");
         undoImage = loadImage("{{ url_for('static',filename='img/undo.png') }}");
         redoImage = loadImage("{{ url_for('static',filename='img/redo.png') }}");
+
+        NabokovImage = loadImage("{{ url_for('static',filename='img/Nabokov.png') }}");
+        stashTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-stash.svg') }}");
+        newTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-new.svg') }}");
+        decoupleTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-decouple.svg') }}");
+        editTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-edit.svg') }}");
+        copyTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-copy.svg') }}");
+
         regenImage = "{{ url_for('static',filename='img/icons/regenerate.svg') }}";
         delImage = "{{ url_for('static',filename='img/icons/trash.svg') }}";
         DCImage = "{{ url_for('static',filename='img/icons/decouple.svg') }}";
+        likeImage = "{{ url_for('static',filename='img/icons/carnation.svg') }}";
+        unlikeImage = "{{ url_for('static',filename='img/icons/carnation-grey.svg') }}";
         suitcaseImage = "{{ url_for('static',filename='img/icons/suitcase.svg') }}";
-
         
         img = loadImage("{{ url_for('static',filename='img/papers/1.png') }}");
         noteImages.push(img)

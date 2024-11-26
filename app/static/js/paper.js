@@ -27,6 +27,23 @@ class Paper {
         const scaleF = this.w * this.sizeFac / this.image.width;
         this.imgWidth = this.image.width * scaleF;
         this.imgHeight = this.image.height * scaleF;
+
+        this.carnation = createButton('');
+        this.carnation.size(40, 32);
+        // Use CSS to add the image as the button's background
+        if (this.s in Favourites) {
+            this.carnation.style('background-image', `url(${likeImage})`);
+        }
+        else {
+            this.carnation.style('background-image', `url(${unlikeImage})`);
+        }
+        
+        this.carnation.style('background-size', 'cover'); // Makes the image cover the button
+        this.carnation.style('border', 'none'); // Optional: Remove button border
+        this.carnation.elt.style.backgroundColor = 'transparent';
+    
+        this.carnation.mousePressed(() => this.likeNote());
+        this.carnation.show();
     }
 
     drawNote() {
@@ -47,6 +64,7 @@ class Paper {
 
             if (trayNotes.includes(this)) {
                 moveToEnd(trayNotes, trayNotes.indexOf(this)).pop()
+                this.carnation.hide()
             }
         }
         else {
@@ -65,6 +83,10 @@ class Paper {
         this.imgWidth = this.image.width * scaleF;
         this.imgHeight = this.image.height * scaleF;
         image(this.image, this.x, this.y, this.imgWidth, this.imgHeight)
+        
+        // Draw Carnation
+        this.carnation.show()
+        this.carnation.position(this.x + (this.imgWidth-40) * this.sizeFac, this.y + (this.imgHeight -40)*this.sizeFac)
 
         if(this.pickedUp){
             this.drawOverlay(this.x, this.y, this.w*this.sizeFac, this.h*this.sizeFac)
@@ -73,13 +95,35 @@ class Paper {
         fill(0, 0, 0)
         textAlign(CENTER, CENTER);
         let calculatedFontSize = map(max(min(3137464, height * width), 300000), 300000, 3137464, 14, 16)
-        textSize(calculatedFontSize * this.sizeFac);
+        const fSize = calculatedFontSize * this.sizeFac
+        textSize(fSize);
         textFont('Lora');
         noStroke()
 
         if (selectedNote != this) {
-            drawWrappedPaperText(this.s, Math.trunc(this.x + (this.w/2)*this.sizeFac), Math.trunc(this.y), (this.w - 70)*this.sizeFac, this.imgHeight, this.sizeFac)
+            drawWrappedPaperText(this.s, Math.trunc(this.x + (this.w/2)*this.sizeFac), Math.trunc(this.y), (this.w - 70)*this.sizeFac, this.imgHeight, this.sizeFac, fSize)
         }
+
+    }
+
+    likeNote() {
+        Interactions.push({
+            "event": "LIKE",
+            "text": this.s
+        })
+        Favourites.push(this.s)
+        this.carnation.style('background-image', `url(${likeImage})`);
+        this.carnation.mousePressed(() => this.unlikeNote());
+    }
+
+    unlikeNote() {
+        Interactions.push({
+            "event": "UNLIKE",
+            "text": this.s
+        })
+        Favourites = Favourites.filter(element => element !== this.s);
+        this.carnation.style('background-image', `url(${unlikeImage})`);
+        this.carnation.mousePressed(() => this.likeNote());
     }
 
     stackSize() {
@@ -234,7 +278,7 @@ class Paper {
     }
 }
 
-function drawWrappedPaperText(s, x, y, maxWidth, height, sizeFac) {
+function drawWrappedPaperText(s, x, y, maxWidth, height, sizeFac, fSize) {
     let words = s.replace(/\n/g, ' ').split(' '); // Split the text into words
     let line = ''; // Initialize an empty line
     let lineHeight = 20 * sizeFac; // Set line height (you can change this based on your font size)
@@ -263,7 +307,20 @@ function drawWrappedPaperText(s, x, y, maxWidth, height, sizeFac) {
 
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
-        text(line.s, x, y + height/2 - half_y + line.y)
+        if (i == 0) {
+            const restW = textWidth(line.s.slice(1, line.length))
+            //const restH = textHeight(line.s)/2
+            textAlign(LEFT, CENTER);
+            textSize(2*fSize)
+            const firstW = textWidth(line.s[0].toUpperCase())/2
+            text(line.s[0].toUpperCase(), x-restW/2 - firstW, y + height/2 - half_y + line.y- 4*sizeFac)
+            textAlign(CENTER, CENTER);
+            textSize(fSize)
+            text(line.s.slice(1, line.length), x + firstW, y + height/2 - half_y + line.y)
+        }
+        else{
+            text(line.s, x, y + height/2 - half_y + line.y)
+        }
     }
 
 }
