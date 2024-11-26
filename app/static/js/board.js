@@ -226,6 +226,17 @@ class Note {
             
             this.s = reply.s;
 
+            Interactions.push({
+                "event": "REGENERATE",
+                "cards": [
+                    {
+                        "original_text": original_text,
+                        "final_text": selectedNote.s,
+                        "words": selectedNote.get_words()
+                    }
+                ]
+            })
+
             if (selectedNote == this) {
                 input.value(this.s)
             }
