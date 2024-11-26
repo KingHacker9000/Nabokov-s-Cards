@@ -1,26 +1,44 @@
-from simpleDB import Database
+import requests
+import urllib.parse  # For URL encoding
+
+DEV_URL = "http://127.0.0.1:5000/database"
+PROD_URL = "https://creative-c9e7df5a5b26.herokuapp.com/database"
+
+def fetch_data_from_database(sql_query):
+    try:
+        # URL-encode the query
+        encoded_query = urllib.parse.quote(sql_query)
+        #print(encoded_query)
+
+        # Make the GET request with the encoded query in the header
+        url = f"{PROD_URL}?command={encoded_query}"
+
+        # Make the GET request
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            return response.json(), True
+        else:
+            print(f"Failed to fetch data. Status code: {response.status_code}")
+            return None, False
+    except Exception as e:
+        print(f"An error occurred during the GET request: {e}")
+        return None, False
+
 from datetime import datetime
 from collections import Counter
 
-class AnalyseDB:
+class AnalyzeRequest:
 
-    def __init__(self, user_id=1, db_name="UserInteractions.db"):
+    def __init__(self, user_id=1):
         self.user_id = user_id
-        self.DB = Database(db_name)
 
     def analyze_session_times(self):
         DURATION_THRESHOLD = 0
         try:
             # Query to get session start and end times
-            result, status = self.DB.execute("""SELECT 
-                    s.session_id, 
-                    MIN(i.timestamp) as start_time, 
-                    MAX(i.timestamp) as end_time 
-                FROM Sessions s
-                JOIN Interactions i ON s.session_id = i.session_id
-                WHERE s.user_id=?
-                GROUP BY s.session_id;
-            """,(self.user_id,))
+            result, status = fetch_data_from_database(f"""SELECT s.session_id, MIN(i.timestamp) as start_time, MAX(i.timestamp) as end_time FROM Sessions s JOIN Interactions i ON s.session_id = i.session_id WHERE s.user_id=1 GROUP BY s.session_id;
+            """)
 
             #print(status, result)
             if not status or not result:
@@ -59,11 +77,11 @@ class AnalyseDB:
         INTERACTION_THRESHOLD = 1
         try:
             # Query to count interactions per session
-            result, status = self.DB.execute("""SELECT session_id, COUNT(*) as interaction_count
+            result, status = fetch_data_from_database(f"""SELECT session_id, COUNT(*) as interaction_count
                 FROM Interactions
-                WHERE user_id=?
+                WHERE user_id={self.user_id}
                 GROUP BY session_id;
-            """, (self.user_id,))
+            """)
 
             if not status or not result:
                 print("Error fetching interaction data.")
@@ -88,10 +106,10 @@ class AnalyseDB:
     def analyze_usage_by_time_of_day(self):
         try:
             # Query to get interaction timestamps
-            result, status = self.DB.execute("""SELECT strftime('%H', timestamp) as hour_of_day
+            result, status = fetch_data_from_database(f"""SELECT strftime('%H', timestamp) as hour_of_day
                 FROM Interactions
-                WHERE user_id=?;
-            """, (self.user_id,))
+                WHERE user_id={self.user_id};
+            """)
 
             if not status or not result:
                 print("Error fetching timestamp data.")
@@ -113,10 +131,10 @@ class AnalyseDB:
     def analyze_text_edits(self):
         try:
             # Query to count EDIT events
-            result, status = self.DB.execute("""SELECT COUNT(*) as edit_count
+            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as edit_count
                 FROM Interactions
-                WHERE event = 'EDIT' AND user_id=?;
-            """, (self.user_id,))
+                WHERE event = 'EDIT' AND user_id={self.user_id};
+            """)
 
             if not status or not result:
                 print("Error fetching edit data.")
@@ -133,14 +151,14 @@ class AnalyseDB:
     def analyze_text_edit_amount(self):
         try:
             # Query to calculate edit amount
-            result, status = self.DB.execute("""SELECT original_text, final_text
+            result, status = fetch_data_from_database(f"""SELECT original_text, final_text
                 FROM Cards
                 WHERE interaction_id IN (
                     SELECT interaction_id
                     FROM Interactions
-                    WHERE event = 'EDIT' AND user_id=?
+                    WHERE event = 'EDIT' AND user_id={self.user_id}
                 );
-            """, (self.user_id,))
+            """)
 
             if not status or not result:
                 print("Error fetching text edit data.")
@@ -164,10 +182,10 @@ class AnalyseDB:
     def analyze_card_combinations(self):
         try:
             # Query to count COMBINE events
-            result, status = self.DB.execute("""SELECT COUNT(*) as combine_count
+            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as combine_count
                 FROM Interactions
-                WHERE event = 'COMBINE' AND user_id=?;
-            """, (self.user_id,))
+                WHERE event = 'COMBINE' AND user_id={self.user_id};
+            """)
 
             if not status or not result:
                 print("Error fetching combine data.")
@@ -183,14 +201,14 @@ class AnalyseDB:
     def analyze_combination_nature(self):
         try:
             # Query to analyze nature of combinations
-            result, status = self.DB.execute("""SELECT original_text, final_text
+            result, status = fetch_data_from_database(f"""SELECT original_text, final_text
                 FROM Cards
                 WHERE interaction_id IN (
                     SELECT interaction_id
                     FROM Interactions
-                    WHERE event = 'COMBINE' AND user_id=?
+                    WHERE event = 'COMBINE' AND user_id={self.user_id}
                 );
-            """, (self.user_id,))
+            """)
 
             if not status or not result:
                 print("Error fetching combination data.")
@@ -225,10 +243,10 @@ class AnalyseDB:
     def analyze_card_decouples(self):
         try:
             # Query to count DECOUPLE events
-            result, status = self.DB.execute("""SELECT COUNT(*) as decouple_count
+            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as decouple_count
                 FROM Interactions
-                WHERE event = 'DECOUPLE' AND user_id=?;
-            """, (self.user_id,))
+                WHERE event = 'DECOUPLE' AND user_id={self.user_id};
+            """)
 
             if not status or not result:
                 print("Error fetching decouple data.")
@@ -244,10 +262,10 @@ class AnalyseDB:
     def analyze_card_regenerations(self):
         try:
             # Query to count DECOUPLE events
-            result, status = self.DB.execute("""SELECT COUNT(*) as regenerate_count
+            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as regenerate_count
                 FROM Interactions
-                WHERE event = 'REGENERATE' AND user_id=?;
-            """, (self.user_id,))
+                WHERE event = 'REGENERATE' AND user_id={self.user_id};
+            """)
 
             if not status or not result:
                 print("Error fetching regenerate data.")
@@ -263,10 +281,10 @@ class AnalyseDB:
     def analyze_card_event(self, event: str):
         try:
             # Query to count DECOUPLE events
-            result, status = self.DB.execute("""SELECT COUNT(*) as event_count
+            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as event_count
                 FROM Interactions
-                WHERE event=? AND user_id=?;
-            """, (event, self.user_id))
+                WHERE event='{event}' AND user_id={self.user_id};
+            """)
 
             if not status or not result:
                 print(f"Error fetching {event} data.")
@@ -282,11 +300,11 @@ class AnalyseDB:
     def analyze_stash_stages(self):
         try:
             # Query to count combines before each stash
-            result, status = self.DB.execute("""SELECT interaction_id, event
+            result, status = fetch_data_from_database(f"""SELECT interaction_id, event
                 FROM Interactions
-                WHERE event IN ('COMBINE', 'STASH') AND user_id=?
+                WHERE event IN ('COMBINE', 'STASH') AND user_id={self.user_id}
                 ORDER BY timestamp;
-            """, (self.user_id,))
+            """)
 
             if not status or not result:
                 print("Error fetching stash stage data.")
@@ -311,7 +329,7 @@ class AnalyseDB:
 
 
 if __name__ == "__main__":
-    analyser = AnalyseDB(1)
+    analyser = AnalyzeRequest(1)
     print(analyser.analyze_session_times())
     print(analyser.analyze_interactions_per_session())
     print(analyser.analyze_usage_by_time_of_day())

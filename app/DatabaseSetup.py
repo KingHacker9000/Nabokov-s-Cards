@@ -89,7 +89,9 @@ def add_user(user_name):
     user_result, status = db.execute("INSERT INTO Users (user_name) VALUES (?) RETURNING user_id;", (user_name,))
     print(f"User {user_result[0]['user_id']} added.")
 
-add_user('Ash')
+add_user('Ash')     # User_id = 1
+add_user('Dashiel') # User_id = 2
+add_user('Nicole')  # User_id = 3
 
 if __name__ == "__main__":
     # Add a sample user
