@@ -7,6 +7,9 @@ import openai
 from dotenv import load_dotenv
 from GPT_wrapper import get_response, generate_words
 
+import re, random
+from wordfreq import top_n_list
+
 from DBHelper import LoggerDB
 
 load_dotenv(override=True)
@@ -69,51 +72,100 @@ def combine():
 
     s1: str = data.get("s1")
     s2: str = data.get("s2")
-    type1: str = data.get("type1")
-    type2: str = data.get("type2")
+    type1 = get_type(s1)
+    type2 = get_type(s2)
 
-    # Combine 2 words into a sentence
-    if type1 == "word" == type2:
-        system_content = "Your Goal is to Combine 2 words in a cohesive sentence that incorporates the 2 words or their essence."
-        user_content = f"Combine the following words into a single cohesive sentence: '{s1}' and '{s2}':"
-        r = get_response(system_content, user_content)
-    
-        # Return the
-        return jsonify({"s": r, "type": "sentence", "Prompt": [system_content, user_content]}), 200
-    
-    # 2 sentences
-    if type1 == "sentence" == type2:
-        system_content = "Your Goal is to Combine 2 sentences into a cohesive narrative that incorporates the 2 sentences or their essence."
-        user_content = f"Combine the following sentences into a cohesive narrative paragraph: '{s1}' and '{s2}':"
-        r = get_response(system_content, user_content)
-    
-        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
-    
-    # 1 word 1 sentence
-    elif "word" in [type1, type2] and "sentence" in [type1, type2]:
-        system_content = "Your Goal is to Combine a word and a sentence into a cohesive narrative that incorporates them or their essence."
-        user_content = f"Combine the following word with the following sentence into a narrative paragraph: '{s1}' and '{s2}':"
-        r = get_response(system_content, user_content)
-    
-        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
+    user_content = f"""The {type1} is '{s1}' and {type2} is '{s2}'"""
 
-    # 1 word 1 paragraph
-    elif "word" in [type1, type2] and "paragraph" in [type1, type2]:
-        system_content = "Your Goal is to Combine a word and a paragraph into a cohesive narrative that incorporates them or their essence."
-        user_content =  f"Combine the following word with the following paragraph into a narrative paragraph: '{s1}' and '{s2}':"
-        r = get_response(system_content, user_content)
+    remove_punctuation = False
+
+    # paragraph cases
+    if 'paragraph' in [type1,type2]:
+        if 'word' in [type1,type2]: # word+paragraph=sentence
+            system_content = """
+                                The goal is to mix the word together with the paragraph into a 
+                                sentence in a narrative.
+                                Keep the sentence short and less verbose. 
+                                Try to make the sentence suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+        elif 'phrase' in [type1,type2]: # phrase+paragraph=sentence
+            system_content = """
+                                The goal is to mix and combine the following phrase and paragraph together into a 
+                                sentence in a narrative.
+                                Keep the sentence short and less verbose. 
+                                Try to make the sentence suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+        elif 'sentence' in [type1,type2]: # sentence+paragraph=sentence
+            system_content = """
+                                The goal is to mix the following the sentence and paragraph together into a 
+                                very short paragraph in a narrative.
+                                Keep the paragraph concise and less verbose. 
+                                Try to make the sentences suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+        elif type1 == type2 : # paragraph+paragraph=paragraph
+            system_content = """
+                                The goal is to mix the following paragraphs together into a single
+                                very short paragraph in a narrative.
+                                Keep the paragraph concise and less verbose. 
+                                Try to make the sentences suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+    # sentence cases
+    elif 'sentence' in [type1, type2]:
+        if 'word' in [type1,type2]: # word+sentence=sentence
+            system_content = """
+                                The goal is to combine the following word and sentence together into a single short coherent sentence in a narrative.
+                                Keep the sentence short and less verbose. Try to make the sentence unexpected. 
+                                Remove subordinate clauses and parenthetical clauses.
+                            """
+        elif 'phrase' in [type1,type2]: # phrase+sentence=sentence
+            system_content = """
+                                The goal is to combine the following phrase and sentence together into a single coherent sentence in a narrative.
+                                Keep the sentence short and less verbose, keep the sentences under 30 words. Try to make the sentence suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+        elif type1 == type2 : # sentence+sentence=sentence
+            system_content = """
+                                The goal is to combine the following sentences together into a 
+                                short paragraph in a narrative.
+                                Keep the paragraph short and less verbose. 
+                                Try to make the sentences suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+    # phrase case
+    elif 'phrase' in [type1, type2]:
+        if 'word' in [type1,type2]: # word+phrase=sentence
+            system_content = """
+                                The goal is to combine the following word and phrase together into a single short coherent sentence in a narrative.
+                                Keep the sentence short and less verbose. Try to make the sentence unexpected. 
+                                Remove subordinate clauses and parenthetical clauses.
+                            """
+        elif type1 == type2 : # phrase+phrase=sentence
+            system_content = """
+                                The goal is to combine the following phrases together into a single short coherent sentence in a narrative.
+                                Keep the sentence short and less verbose. Try to make the sentence suprising and interesting. 
+                                Remove subordinate clauses and parenthetical clauses. 
+                            """
+    # word case
+    elif type1 == 'word' and type2 == 'word': # word+word=phrase
+        system_content = "The goal is to combine the following words together into a coherent phrase with a maximum of 7 words."
+        remove_punctuation = True
+    else:
+        return jsonify({"s": "Error: Unable to Mix 2 Paragraphs", "type": "sentence"}), 200
+
+    # get GPT response
+    r = get_response(system_content, user_content)
+    if remove_punctuation:
+        r = re.sub(r'[.,?!"]','',r)
     
-        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
+    print()
     
-    # 1 sentence 1 paragraph
-    elif "sentence" in [type1, type2] and "paragraph" in [type1, type2]:
-        system_content = "Your Goal is to Combine a sentence and a paragraph into a cohesive narrative that incorporates them or their essence."
-        user_content = f"Combine the following sentence with the following paragraph into a narrative paragraph: '{s1}' and '{s2}':"
-        r = get_response(system_content, user_content)
+    # Return the
+    return jsonify({"s": r, "type": "sentence", "Prompt": [system_content, user_content]}), 200
     
-        return jsonify({"s": r, "type": "paragraph", "Prompt": [system_content, user_content]}), 200
-    
-    return jsonify({"s": "Error: Unable to Mix 2 Paragraphs", "type": "sentence"}), 200
 
 @app.route("/board/notes")
 def words():
@@ -141,6 +193,39 @@ def download_file():
 @app.route('/database')
 def database_execute():
     return DB.DB.execute(request.args.get("command", "SELECT * FROM Users;"))[0]
+
+##### Helper functions #####
+def get_type(input_string):
+    # Determine whether string is of type blank, word, phrase, sentence, or paragraph
+    stripped_string = input_string.strip()
+    if not stripped_string:
+        return "blank"
+
+    # Split the string into sentences based on common sentence-ending punctuation
+    sentences = re.split(r'[.!?]\s*', stripped_string)
+    sentences = [s for s in sentences if s]  # Remove empty strings
+
+    if len(sentences) == 0:
+        return "word"
+    elif len(sentences) == 1:
+        # Split the single sentence into words to differentiate between word and phrase
+        words = stripped_string.split()
+        if len(words) == 1:
+            return "word"
+        elif re.search(r'[.!?]$', stripped_string):
+            return "sentence"
+        else:
+            return "phrase"
+    else:
+        return "paragraph"
+
+
+def get_random_word():
+
+    #TODO: Call for regenerate if the word is blank
+    top_words = top_n_list("en", 10000)
+    top_words = [s for s in top_words if len(s) > 1] #Filter out single letter words
+    return random.choice(top_words)  # Pick a random word
 
 if __name__ == '__main__':
     
