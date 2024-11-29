@@ -596,8 +596,10 @@ function overOtherButtons() {
     if (openTutorial) return true
     
     // New  Note Button
-    if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
-        return true
+    if (width-60 <= mouseX && mouseX <= width &&
+        height-60 <= mouseY && mouseY <= height
+    ) {
+        return true;
     }
 
     // TrayButton
