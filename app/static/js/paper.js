@@ -262,6 +262,10 @@ class Paper {
             this.h += (this.s.length - 200)/4
         }
         input.size((this.imgWidth - 50)*this.sizeFac, (this.imgHeight - 50)*this.sizeFac);
+
+        if (this.s.length < 400) {
+            this.type = "sentence"
+        }
     }
 
     isOverlapped(note){
