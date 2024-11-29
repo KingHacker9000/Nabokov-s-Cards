@@ -5,6 +5,7 @@
 {% block head %}
 
     <span id="favourites" style="display: none;">{{ favourites }}</span>
+    <script src="https://cdn.jsdelivr.net/npm/p5.js-svg@1.0.1/p5.svg.min.js"></script>
 
     <script>
       let pinImage;
@@ -24,21 +25,24 @@
         boardTexture = loadImage("{{ url_for('static',filename='img/pinboardTexture.png') }}");
         undoImage = loadImage("{{ url_for('static',filename='img/undo.png') }}");
         redoImage = loadImage("{{ url_for('static',filename='img/redo.png') }}");
+        newImage = loadImage("{{ url_for('static',filename='img/icons/page_stack.svg') }}");
+        newLiftImage = loadImage("{{ url_for('static',filename='img/icons/page_stack_lift.svg') }}");
 
         NabokovImage = loadImage("{{ url_for('static',filename='img/Nabokov.png') }}");
-        stashTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-stash.svg') }}");
+        stashTImage = loadImage("{{ url_for('static',filename='img/icons/stash-cards.svg') }}");
         newTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-new.svg') }}");
-        decoupleTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-decouple.svg') }}");
-        editTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-edit.svg') }}");
+        decoupleTImage = loadImage("{{ url_for('static',filename='img/icons/decouple-cards.svg') }}");
+        coupleTImage = loadImage("{{ url_for('static',filename='img/icons/couple-cards.svg') }}");
+        editTImage = loadImage("{{ url_for('static',filename='img/icons/edit-cards.svg') }}");
         copyTImage = loadImage("{{ url_for('static',filename='img/icons/tutorial-copy.svg') }}");
 
         regenImage = "{{ url_for('static',filename='img/icons/regenerate.svg') }}";
         delImage = "{{ url_for('static',filename='img/icons/trash.svg') }}";
         DCImage = "{{ url_for('static',filename='img/icons/decouple.svg') }}";
-        likeImage = "{{ url_for('static',filename='img/icons/carnation.svg') }}";
-        unlikeImage = "{{ url_for('static',filename='img/icons/carnation-grey.svg') }}";
-        suitcaseImage = "{{ url_for('static',filename='img/icons/suitcase.svg') }}";
-        
+        likeImage = "{{ url_for('static',filename='img/icons/rose-color.png') }}";
+        unlikeImage = "{{ url_for('static',filename='img/icons/rose-grey.png') }}";
+        suitcaseImage = loadImage("{{ url_for('static',filename='img/icons/suitcase.svg') }}");
+
         img = loadImage("{{ url_for('static',filename='img/papers/1.png') }}");
         noteImages.push(img)
         img = loadImage("{{ url_for('static',filename='img/papers/3.png') }}");
@@ -65,6 +69,7 @@
     <script src="{{ url_for('static',filename='js/history.js') }}"></script>
     <script src="{{ url_for('static',filename='js/paper.js') }}"></script>
     <script src="{{ url_for('static',filename='js/tray.js') }}"></script>
+    <script src="{{ url_for('static',filename='js/animations.js') }}"></script>
     <script src="{{ url_for('static',filename='js/board.js') }}"></script>
 {% endblock %}
 
@@ -108,27 +113,10 @@
 
 {% endif %}
 
+<script>let Interactions = []</script>
 {% if log %}
 
     <script>
-
-      let Interactions = [{
-            "event": "DECOUPLE",
-            "cards": [
-                {
-                    "original_text": "Hello World, Goodbye Mars!",
-                    "final_text": "Hello World",
-                    "words": ["Hello", "World"]
-                },
-                {
-                    "original_text": "Hello World, Goodbye Mars!",
-                    "final_text": "Bye Mars",
-                    "words": ["Bye", "Mars"]
-                }
-            ]
-        }
-      ]
-
       async function updateLog(){
 
         if (Interactions.length == 0) {

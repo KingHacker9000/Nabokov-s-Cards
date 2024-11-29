@@ -86,7 +86,8 @@ class Paper {
         
         // Draw Carnation
         this.carnation.show()
-        this.carnation.position(this.x + (this.imgWidth-40) * this.sizeFac, this.y + (this.imgHeight -40)*this.sizeFac)
+        this.carnation.position(this.x + (this.imgWidth-40* this.sizeFac) , this.y + (this.imgHeight -40* this.sizeFac))
+        this.carnation.size(40*this.sizeFac, 32*this.sizeFac)
 
         if(this.pickedUp){
             this.drawOverlay(this.x, this.y, this.w*this.sizeFac, this.h*this.sizeFac)
@@ -244,7 +245,7 @@ class Paper {
 
     resize() {
 
-        if (this.s.length > 25 && this.type == "word"){
+        if (this.s.length > 15 && this.type == "word"){
             this.type = "sentence"
         }
         if (this.s.length > 100) {
