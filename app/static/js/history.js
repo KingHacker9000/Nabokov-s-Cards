@@ -28,12 +28,15 @@ class HistoryDecouple extends HistoryAction {
     }
 
     undo () {
+        this.n1.carnation.hide()
+        this.n2.carnation.hide()
         moveToEnd(notes, notes.indexOf(this.n1)).pop()
         moveToEnd(notes, notes.indexOf(this.n2)).pop()
         notes.push(this.new_note)
     }
 
     redo () {
+        this.new_note.carnation.hide()
         moveToEnd(notes, notes.indexOf(this.new_note)).pop()
         notes.push(this.n1)
         notes.push(this.n2)
@@ -49,12 +52,15 @@ class HistoryCouple extends HistoryAction {
     }
 
     undo () {
+        this.new_note.carnation.hide()
         moveToEnd(notes, notes.indexOf(this.new_note)).pop()
         notes.push(this.n1)
         notes.push(this.n2)
     }
 
     redo () {
+        this.n1.carnation.hide()
+        this.n2.carnation.hide()
         moveToEnd(notes, notes.indexOf(this.n1)).pop()
         moveToEnd(notes, notes.indexOf(this.n2)).pop()
         notes.push(this.new_note)
@@ -72,6 +78,7 @@ class HistoryDelete extends HistoryAction {
     }
 
     redo () {
+        this.note.carnation.hide()
         moveToEnd(notes, notes.indexOf(this.note)).pop()
     }
 }

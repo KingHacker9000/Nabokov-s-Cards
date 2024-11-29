@@ -7,7 +7,7 @@ let note_h = 150
 
 const typeMultipliers = {
     "word": 1,
-    "sentence": 1.5,
+    "sentence": 1.8,
     "paragraph": 2.5
 }
 
@@ -42,6 +42,8 @@ let doubleTapThreshold = 300; // Time in milliseconds
 let Editing = false;
 let Original_Edit;
 
+// Animations
+let animations = []; // Array to hold multiple animations
 
 // Word Stash
 let wordStash = []
@@ -282,7 +284,7 @@ function setup() {
     corkTexture = createGraphics(windowWidth, windowHeight);
         
     // Generate the cork texture in the buffer
-    //loadPinBoardTexture(corkTexture);
+    // loadPinBoardTexture(corkTexture);
 
     make_notes(n=(DEBUG? 3: 10))
     fillWordStash(n=10)
@@ -297,6 +299,7 @@ function setup() {
     input.style('outline', 'none');       // Remove outline
     input.style('resize', 'none');        // Disable resizing
     input.style('padding', '10px');          // Remove padding
+    input.style('padding-bottom', '20px');          // Remove padding
     input.style('margin', '0');           // Remove margin
     input.style('box-shadow', 'none');    // Remove shadow
     input.style('background-color', 'white'); // Plain white background
@@ -405,6 +408,8 @@ function draw() {
         button.position(xstart + 80 * selectedNote.sizeFac + (2*spaceAround), selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac);
         decoupleButton.position(xstart+ spaceAround + 40 * selectedNote.sizeFac, selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac)
         deleteButton.position(xstart, selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac)
+
+        drawHoverText()
     }
     else {
         button.hide()
@@ -421,6 +426,15 @@ function draw() {
 
     image(undoImage, 30, height-60, 50, 50)
     image(redoImage, 100, height-60, 50, 50)
+
+    // Draw all animations
+    for (let anim of animations) {
+        anim.update();
+        anim.display();
+    }
+
+    // Remove completed animations
+    animations = animations.filter((anim) => !anim.isComplete);
 
 }
 
@@ -573,8 +587,9 @@ function copy_text(){
 
 function overOtherButtons() {
     // How To Button
-    const r = 75;
-    if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
+    if (10 <= mouseX && mouseX <= 56 &&
+        10 <= mouseY && mouseY <= 100
+    ) {
         return true
     }
 
@@ -665,42 +680,50 @@ function updateNoteText() {
 }
 
 function drawNewNoteButton() {
-    const r = 75;
 
-    fill(205, 205, 205, 230)
-    stroke(0, 0, 0, 200)
-    if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {
-        fill(100, 100, 100, 230) 
+    if (width-60 <= mouseX && mouseX <= width &&
+        height-60 <= mouseY && mouseY <= height
+    ) {
+        image(newLiftImage, width-60, height-60, 50, 50)
     }
-    circle(width - 60, height - 60, r)
-    textSize(24);
-    textFont('Lora');
-    stroke(0, 0, 0)
-    fill(0,0,0)
-    text("+", width - 60, height - 60)
+    else {
+        image(newImage, width-60, height-60, 50, 50)
+    }
+    
 }
 
 function drawHowToButton() {
-    const r = 75;
+    // const r = 75;
 
-    fill(205, 205, 205, 230)
-    stroke(0, 0, 0, 200)
-    if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
-        fill(100, 100, 100, 230) 
-    }
-    circle(width - 60, 60, r)
-    textSize(24);
+    // fill(205, 205, 205, 230)
+    // stroke(0, 0, 0, 200)
+    // if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
+    //     fill(100, 100, 100, 230) 
+    // }
+    // circle(width - 60, 60, r)
+    // textSize(24);
+    // textFont('Lora');
+    // stroke(0, 0, 0)
+    // fill(0,0,0)
+    // textAlign(CENTER, CENTER);
+    // text(openTutorial? "X":"?", width - 60, 60)
+
+    let ImageHSize = 80
+    image(NabokovImage, 10, 10, NabokovImage.width*(ImageHSize/NabokovImage.height), ImageHSize)
+    textSize(36);
     textFont('Lora');
-    stroke(0, 0, 0)
-    fill(0,0,0)
+    stroke(0, 0, 0);
+    fill(255,255,255)
     textAlign(CENTER, CENTER);
-    text(openTutorial? "X":"?", width - 60, 60)
+    text(openTutorial? "X":"?", 60, 20)
+
 }
 
 function drawTutorialOverlay() {
     // Popup background
-    fill(25, 25, 25, 210); // Black background with slight transparency
+    fill(40, 40, 40, 245); // Black background with slight transparency
     rectMode(CENTER);
+    stroke(40)
     rect(width / 2, height / 2, width*0.9, height*0.9, 20); // Rounded rectangle
   
     // Headline text
@@ -716,15 +739,15 @@ function drawTutorialOverlay() {
       "Card Options",
       "Merging cards",
       "Decoupling cards",
-      "Regenerating cards",
       "Editing cards",
+      "Stashing cards",
     ];
     let ImagesList = [
         newTImage,
         copyTImage,
+        coupleTImage,
+        decoupleTImage,
         editTImage,
-        decoupleTImage,
-        decoupleTImage,
         stashTImage
     ]
   
@@ -752,99 +775,39 @@ function drawTutorialOverlay() {
     imageMode(CORNER)
   }
 
-function drawTutorialOverlayOld() {
-    // Background for overlay with a sepia tone and rounded corners
-    fill(244, 240, 223, 230);
-    noStroke();
-    rect(60, 60, width - 120, height - 120, 25);
-  
-    // Title with vintage style
-    textAlign(CENTER, TOP);
-    textSize(36);
-    textStyle(BOLD);
-    fill(87, 59, 36);
-    text("Creative Writing with AI Note Cards", width / 2, 100);
-    textSize(24);
-    textStyle(ITALIC);
-    text("How To Use", width / 2, 140);
-  
-    // Decorative line
-    stroke(87, 59, 36, 150);
-    strokeWeight(1.5);
-    line(width / 2 - 120, 175, width / 2 + 120, 175);
-    noStroke();
-  
-    // Text alignment and font settings for instructions
-    textAlign(LEFT, TOP);
-    textSize(18);
-    fill(87, 59, 36);
-    let x = 100;
-    let y = 200;
-    let lineHeight = 30;
-  
-    // Instructions with icons and vintage color styling
-    let instructions = [
-      { icon: "🖋️", text: "Click and Drag Note Cards to Mix them using AI!" },
-      { icon: "✍️", text: "Combine Words, Sentences, and Paragraphs (but avoid merging two paragraphs!)." },
-      { icon: "📄", text: "Double-click to Edit a Note Card." },
-      { icon: "📥", text: "Move text to your Stash to save space." },
-      { icon: "✨", text: "Explore the art of creative writing with AI!" },
-    ];
-  
-    instructions.forEach((instr, i) => {
-      textSize(22);
-      text(instr.icon, x, y + i * lineHeight * 1.6);
-      textSize(18);
-      text(instr.text, x + 40, y + i * lineHeight * 1.6);
+function drawHoverText() {
+    stroke(0, 0, 0)
+    fill(256, 256, 256)
+    textSize(12)
+
+    const delPos = deleteButton.position()
+    if (mouseX >= delPos.x && mouseX <= delPos.x+40 &&
+        mouseY >= delPos.y && mouseY <= delPos.y+32)
+    {
+        text("Delete", delPos.x + 20, delPos.y+50)
+    }
+    const decouplePos = decoupleButton.position()
+    if (mouseX >= decouplePos.x && mouseX <= decouplePos.x+40 &&
+        mouseY >= decouplePos.y && mouseY <= decouplePos.y+32)
+    {
+        text("Decouple", decouplePos.x + 20, decouplePos.y+50)
+    }
+    const regenPos = button.position()
+    if (mouseX >= regenPos.x && mouseX <= regenPos.x+40 &&
+        mouseY >= regenPos.y && mouseY <= regenPos.y+32)
+    {
+        text("Regenerate", regenPos.x + 20, regenPos.y+50)
+    }
+
+    notes.forEach(note => {
+        const LikePos = note.carnation.position()
+        if (mouseX >= LikePos.x && mouseX <= LikePos.x+40 &&
+            mouseY >= LikePos.y && mouseY <= LikePos.y+32)
+        {
+            text("Like", LikePos.x + 20, LikePos.y+50)
+        }
     });
-  
-    // Section headings with warm, literary colors
-    y += instructions.length * lineHeight * 1.6 + 50;
-    textSize(20);
-    textStyle(BOLD);
-    fill(87, 59, 36);
-    text("Adding a New Card:", x, y);
-    fill(120, 87, 65);
-    textSize(18);
-    textStyle(NORMAL);
-    text("- Click the + Button in the bottom right corner, or double-click an empty spot, then edit the text on the new note.", x, y + lineHeight, width - 160);
-  
-    y += lineHeight * 2.5;
-    textSize(20);
-    textStyle(BOLD);
-    fill(87, 59, 36);
-    text("Deleting a Card:", x, y);
-    fill(120, 87, 65);
-    textSize(18);
-    textStyle(NORMAL);
-    text("- Double-click and press Delete.", x, y + lineHeight, width - 160);
-  
-    y += lineHeight * 2.5;
-    textSize(20);
-    textStyle(BOLD);
-    fill(87, 59, 36);
-    text("Regenerating Cards:", x, y);
-    fill(120, 87, 65);
-    textSize(18);
-    textStyle(NORMAL);
-    text("- Double-click and select Regenerate.", x, y + lineHeight, width - 160);
-  
-    y += lineHeight * 2.5;
-    textSize(20);
-    textStyle(BOLD);
-    fill(87, 59, 36);
-    text("Decoupling:", x, y);
-    fill(120, 87, 65);
-    textSize(18);
-    textStyle(NORMAL);
-    text("- Double-click and select Decouple to separate connected ideas.", x, y + lineHeight, width - 160);
-  
-    // Footer with instructions for toggling the overlay
-    textAlign(CENTER, CENTER);
-    fill(87, 59, 36, 200);
-    textSize(16);
-    text("Inspired By Vladimir Nabokov's Cards", width / 2, height - 70);
-  }
+}
 
 function mousePressed() {
 
@@ -853,6 +816,13 @@ function mousePressed() {
     if (wordStash.length <= 2) {
         fillWordStash(n=10)
     }
+
+    // Check Double Tap ---------------
+    let currentTime = millis(); // Get the current time in milliseconds
+
+    // Update lastTouchTime to the current time
+    lastTouchTime = currentTime;
+    //---------------------------------
 
     selected = false;
     for (let i = notes.length-1; i >= 0; i--) {
@@ -970,17 +940,21 @@ function touchStarted() {
 function mouseReleased() {
 
     // How To Button
-    const r = 75;
-    if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
+    if (10 <= mouseX && mouseX <= 56 &&
+        10 <= mouseY && mouseY <= 100
+    ) {
         openTutorial = !openTutorial;
     }
 
     if (openTutorial) return
     
     // New  Note Button
-    if ((mouseX - (width - 60))**2 + (mouseY - (height - 60))**2 < r**1.5) {4
+    if (width-60 <= mouseX && mouseX <= width &&
+        height-60 <= mouseY && mouseY <= height
+    ) {
         // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
-        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        spot = findEmptySpot()
+        let new_note = new Paper("Enter Text", spot.x, spot.y);
         Interactions.push({
             "event": "ADD"
         })
@@ -1021,6 +995,7 @@ function mouseReleased() {
     }
 
     // Notes Pickup & Merge
+    let currentTime = millis(); 
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         if (!note) {
@@ -1028,10 +1003,9 @@ function mouseReleased() {
         }
         else if (note.pickedUp) {
 
+            console.log(currentTime, lastTouchTime)
             notes.forEach(other => {
-                if(other != note && note.isOverlapped(other)  && !trayNotes.includes(note) && !TimeUp){
-
-                    mix_note(other, note)
+                if(currentTime - lastTouchTime > 300 && other != note && note.isOverlapped(other)  && !trayNotes.includes(note) && !TimeUp){
 
                     moveToEnd(notes, i).pop()
                     note.carnation.hide()
@@ -1044,6 +1018,15 @@ function mouseReleased() {
                             break
                         }
                     }
+
+                    new_note = new Paper("Loading", note.x, note.y, "word", [note, other])
+                    let animation = new LoadingAnimation(note.x, note.y);
+                    animations.push(animation);
+                    mix_note(other, note, new_note, animation)
+
+                    new_note.madeFrom[0].carnation.hide()
+                    new_note.madeFrom[1].carnation.hide()
+
                 }
             });
 
@@ -1062,17 +1045,21 @@ function touchEnded() {
     // ----
 
     // How To Button
-    const r = 75;
-    if ((touchX - (width - 60))**2 + (touchY - (60))**2 < r**1.5) {
+    if (10 <= touchX && touchX <= 56 &&
+        10 <= touchY && touchY <= 100
+    ) {
         openTutorial = !openTutorial;
     }
 
     if (openTutorial) return
 
     // New  Note
-    if ((touchX - (width - 60))**2 + (touchY - (height - 60))**2 < r**1.5) {4
+    if (width-60 <= touchX && touchX <= width &&
+        height-60 <= touchY && touchY <= height
+    ) {
         // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
-        let new_note = new Paper("Enter Text", random(0, width*0.75), random(0, height*0.75));
+        spot = findEmptySpot()
+        let new_note = new Paper("Enter Text", spot.x, spot.y);
         Interactions.push({
             "event": "ADD"
         })
@@ -1085,23 +1072,25 @@ function touchEnded() {
             continue
         }
         else if (note.pickedUp) {
-
+            let currentTime = millis(); 
             notes.forEach(other => {
-                if(other != note && note.isOverlapped(other) && !trayNotes.includes(note) && !TimeUp){
-                    //other.s += " " + note.s
-                    mix_note(other, note)
-
+                if(currentTime - lastTouchTime > 300 && other != note && note.isOverlapped(other) && !trayNotes.includes(note) && !TimeUp){
                     moveToEnd(notes, i).pop()
                     note.carnation.hide()
 
                     for (let j = 0; j < notes.length; j++) {
                         const n = notes[j];
                         if(n.s == other.s){
-                            moveToEnd(notes, j).pop()   
+                            moveToEnd(notes, j).pop()
                             other.carnation.hide()
                             break
                         }
                     }
+
+                    new_note = new Paper("", note.x, note.y, "", [note, other])
+                    let animation = new LoadingAnimation(note.x, note.y);
+                    animations.push(animation);
+                    mix_note(other, note, new_note, animation)
                 }
             });
 
@@ -1111,13 +1100,12 @@ function touchEnded() {
     }
 }
 
-async function mix_note(n1, n2) {
+async function mix_note(n1, n2, new_note, animation) {
 
     if (TimeUp) return
 
     try {
         const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
-        console.log(baseUrl);  // e.g., "https://google.com"
 
         const url = baseUrl + "/board/combine"
 
@@ -1142,21 +1130,24 @@ async function mix_note(n1, n2) {
             console.log("User Content", reply.Prompt[1])
             console.log("------------------------------------------")
         }
-        // New Node
-        new_note = new Paper(reply.s, n1.x, n1.y, reply.type, [n1, n2])
+        // New Note
+        new_note.s = reply.s
+        new_note.type = reply.type
+        new_note.resize()
+
         notes.push(new_note)
-        selectedNote = new_note;
-        input.show();
-        Editing = true;
-        original_text = selectedNote.s;
-        button.show();
-        decoupleButton.show()
-        selected = true
-        deleteButton.show()
-        input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
-        input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
-        input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
-        input.value(selectedNote.s);  // Set the input value to the current note's content
+        // selectedNote = new_note;
+        // input.show();
+        // Editing = true;
+        // original_text = selectedNote.s;
+        // button.show();
+        // decoupleButton.show()
+        // selected = true
+        // deleteButton.show()
+        // input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
+        // input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
+        // input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
+        // input.value(selectedNote.s);  // Set the input value to the current note's content
         Interactions.push({
             "event": "COMBINE",
             "cards": [
@@ -1172,6 +1163,7 @@ async function mix_note(n1, n2) {
                 }
             ]
         })
+        animation.complete()
         history.push(new HistoryCouple(n1, n2, notes[notes.length-1]))
         historyIndex += 1
 
@@ -1189,7 +1181,8 @@ async function make_notes(n) {
         let response = await fetch(url);
         let reply = await response.text();
         reply.split(" ").forEach(s => {
-            let n = new Paper(s, random(0, width*0.5), random(0, height*0.5))
+            spot = findEmptySpot()
+            let n = new Paper(s, spot.x, spot.y)
             notes.push(n)
         });
 
@@ -1342,4 +1335,43 @@ function drawMadeFromNote(note, x, y, w, h, color) {
 
 function isOverlapped(x, y, note){
     return ((note.x - x)**2 + (note.y - y)**2) <= 8000
+}
+
+// Function to instantiate a loading animation at a given position
+function startLoadingAnimation(x, y, asyncTask) {
+    let animation = new LoadingAnimation(x, y);
+    animations.push(animation);
+  
+    // Wait for the async task to complete, then mark animation as complete
+    asyncTask.then(() => animation.complete());
+  }
+
+function findEmptySpot(){
+    let x = random(0, width*0.75)
+    let y = random(0, height*0.75)
+    let empty = true
+
+    notes.forEach(note => {
+        if(Math.abs(note.x - x) < 100 || Math.abs(note.y - y) < 100){
+            empty = false
+        }
+    });
+
+    let i = 0;
+
+    while(!empty && i < 10) {
+        x = random(0, width*0.75)
+        y = random(0, height*0.75)
+        empty = true
+
+        notes.forEach(note => {
+            if(Math.abs(note.x - x) < 100 || Math.abs(note.y - y) < 100){
+                empty = false
+            }
+        });
+
+        i += 1
+    }
+
+    return {x: x, y: y}
 }
