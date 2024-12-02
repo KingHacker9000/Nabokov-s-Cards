@@ -99,3 +99,19 @@ class HistoryRegenerate extends HistoryAction {
         this.note = this.text
     }
 }
+
+class HistoryAdd extends HistoryAction {
+    constructor(note) {
+        super()
+        this.note = note
+    }
+
+    undo () {
+        this.note.carnation.hide()
+        moveToEnd(notes, notes.indexOf(this.note)).pop()
+    }
+
+    redo () {
+        notes.push(this.note)
+    }
+}

@@ -55,7 +55,7 @@ def board():
     if request.args.get("uid"):
         session['session_id'] = DB.new_session(request.args["uid"])
         session['user_id'] = request.args["uid"]
-        favourite_list = DB.get_favourites(request.args["uid"])
+        favourite_list = DB.get_favourites(request.args["uid"], session["session_id"])
         return render_template("board.html", log=True, favourites=json.dumps(favourite_list))
     return render_template("board.html", favourites=json.dumps([]))
 

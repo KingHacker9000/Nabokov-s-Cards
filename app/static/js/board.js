@@ -409,6 +409,11 @@ function draw() {
         decoupleButton.position(xstart+ spaceAround + 40 * selectedNote.sizeFac, selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac)
         deleteButton.position(xstart, selectedNote.y + (selectedNote.imgHeight - negHeight)*selectedNote.sizeFac)
 
+        input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
+        input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
+        input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
+        input.value(selectedNote.s);  // Set the input value to the current note's content
+
         drawHoverText()
     }
     else {
@@ -479,6 +484,8 @@ function doubleClicked() {
         // Make new note
         // let new_note = new Paper(wordStash.pop(), mouseX, mouseY);
         let new_note = new Paper("Enter Text", mouseX, mouseY);
+        history.push(new HistoryAdd(new_note))
+        historyIndex += 1
         selectedNote = new_note;
         input.show();
         Editing = true;
@@ -587,7 +594,7 @@ function copy_text(){
 
 function overOtherButtons() {
     // How To Button
-    if (10 <= mouseX && mouseX <= 56 &&
+    if (10 <= mouseX && mouseX <= 66 &&
         10 <= mouseY && mouseY <= 100
     ) {
         return true
@@ -942,7 +949,7 @@ function touchStarted() {
 function mouseReleased() {
 
     // How To Button
-    if (10 <= mouseX && mouseX <= 56 &&
+    if (10 <= mouseX && mouseX <= 66 &&
         10 <= mouseY && mouseY <= 100
     ) {
         openTutorial = !openTutorial;
@@ -957,6 +964,8 @@ function mouseReleased() {
         // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
         spot = findEmptySpot()
         let new_note = new Paper("Enter Text", spot.x, spot.y);
+        history.push(new HistoryAdd(new_note))
+        historyIndex += 1
         Interactions.push({
             "event": "ADD"
         })
@@ -1062,19 +1071,55 @@ function touchEnded() {
         // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
         spot = findEmptySpot()
         let new_note = new Paper("Enter Text", spot.x, spot.y);
+        history.push(new HistoryAdd(new_note))
+        historyIndex += 1
         Interactions.push({
             "event": "ADD"
         })
         notes.push(new_note)
     }
 
+    // TrayButton
+    if (touchOverTrayButton(touchX, touchY)) {
+        clickTrayButton()
+    }
+
+    // Undo Button
+    if (historyIndex >= 0  && history.length > 0 && 30 <= touchX && touchX <= 80
+        && height-60 <= touchY  && touchY <= height - 10
+    ) {
+        if (DEBUG) {
+            console.log("UNDO", historyIndex)
+        }
+        Interactions.push({
+            "event": "UNDO"
+        })
+        history[historyIndex].undo()
+        historyIndex -= 1
+    }
+
+    // Redo Button
+    if (historyIndex >= -1 && history.length > 0 && 100 <= touchX && touchX <= 150
+        && height-60 <= touchY  && touchY <= height - 10
+    ) {
+        historyIndex += 1
+        if (DEBUG) {
+            console.log("REDO", historyIndex)
+        }
+        Interactions.push({
+            "event": "REDO"
+        })
+        history[historyIndex].redo()
+    }
+
+    // Notes Pickup & Merge
+    let currentTime = millis(); 
     for (let i = notes.length-1; i >= 0; i--) {
         let note = notes[i];
         if (!note) {
             continue
         }
         else if (note.pickedUp) {
-            let currentTime = millis(); 
             notes.forEach(other => {
                 if(currentTime - lastTouchTime > 300 && other != note && note.isOverlapped(other) && !trayNotes.includes(note) && !TimeUp){
                     moveToEnd(notes, i).pop()
@@ -1093,6 +1138,9 @@ function touchEnded() {
                     let animation = new LoadingAnimation(note.x, note.y);
                     animations.push(animation);
                     mix_note(other, note, new_note, animation)
+
+                    new_note.madeFrom[0].carnation.hide()
+                    new_note.madeFrom[1].carnation.hide()
                 }
             });
 
@@ -1138,18 +1186,18 @@ async function mix_note(n1, n2, new_note, animation) {
         new_note.resize()
 
         notes.push(new_note)
-        // selectedNote = new_note;
-        // input.show();
-        // Editing = true;
-        // original_text = selectedNote.s;
-        // button.show();
-        // decoupleButton.show()
-        // selected = true
-        // deleteButton.show()
-        // input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
-        // input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
-        // input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
-        // input.value(selectedNote.s);  // Set the input value to the current note's content
+        selectedNote = new_note;
+        input.show();
+        Editing = true;
+        original_text = selectedNote.s;
+        button.show();
+        decoupleButton.show()
+        selected = true
+        deleteButton.show()
+        input.position(selectedNote.x+25, selectedNote.y+25);  // Position input near the clicked note
+        input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
+        input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
+        input.value(selectedNote.s);  // Set the input value to the current note's content
         Interactions.push({
             "event": "COMBINE",
             "cards": [
@@ -1185,6 +1233,8 @@ async function make_notes(n) {
         reply.split(" ").forEach(s => {
             spot = findEmptySpot()
             let n = new Paper(s, spot.x, spot.y)
+            history.push(new HistoryAdd(n))
+            historyIndex += 1
             notes.push(n)
         });
 

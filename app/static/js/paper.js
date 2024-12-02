@@ -266,6 +266,7 @@ class Paper {
         if (this.s.length < 400) {
             this.type = "sentence"
         }
+
     }
 
     isOverlapped(note){

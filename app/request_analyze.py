@@ -161,7 +161,7 @@ class AnalyzeRequest:
             """)
 
             if not status or not result:
-                print("Error fetching text edit data.")
+                print("Error fetching text edit data./ No Edits Yet!")
                 return None
 
             total_changes = 0

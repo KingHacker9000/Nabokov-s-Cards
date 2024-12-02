@@ -92,6 +92,13 @@ def add_user(user_name):
 add_user('Ash')     # User_id = 1
 add_user('Dashiel') # User_id = 2
 add_user('Nicole')  # User_id = 3
+add_user('Abhishek')# User_id = 4
+add_user('Bogdan')  # User_id = 5
+add_user('Jeb')     # User_id = 6
+add_user('Matthew') # User_id = 7
+add_user('Patrick') # User_id = 8
+add_user('Warren')  # User_id = 9
+
 
 if __name__ == "__main__":
     # Add a sample user
