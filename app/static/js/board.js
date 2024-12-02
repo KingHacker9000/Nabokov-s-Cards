@@ -286,7 +286,7 @@ function setup() {
     // Generate the cork texture in the buffer
     // loadPinBoardTexture(corkTexture);
 
-    make_notes(n=(DEBUG? 3: 10))
+    make_notes(n=(DEBUG? 3: 5))
     fillWordStash(n=10)
 
     // Create an input element for editing notes
@@ -1232,7 +1232,8 @@ async function make_notes(n) {
         let reply = await response.text();
         reply.split(" ").forEach(s => {
             spot = findEmptySpot()
-            let n = new Paper(s, spot.x, spot.y)
+            //let n = new Paper(s, spot.x, spot.y)
+            let n = new Paper("", spot.x, spot.y)
             history.push(new HistoryAdd(n))
             historyIndex += 1
             notes.push(n)
