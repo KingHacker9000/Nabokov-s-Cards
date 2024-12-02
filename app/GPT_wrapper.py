@@ -1,7 +1,7 @@
 import openai
 
 # "chatgpt-4o-latest"
-def get_response(system_content, user_content, model="gpt-4o-mini") -> str:
+def get_response(system_content, user_content, model="gpt-4o") -> str:
     completion = openai.chat.completions.create(
         model=model,
         messages=[
@@ -27,7 +27,7 @@ def get_response(system_content, user_content, model="gpt-4o-mini") -> str:
 
 def generate_words(n):
     completion = openai.chat.completions.create(
-        model="gpt-4o-mini",
+        model="gpt-4o",
         messages=[
             {
                 "role": "system",
