@@ -79,7 +79,8 @@ def combine():
 
     remove_punctuation = False
 
-    fav_list = DB.get_favourites(session['user_id'],session['session_id'])       
+    fav_list = DB.get_favourites(session['user_id'],session['session_id'])
+    fav_list = '", "'.join(fav_list)    
 
     # paragraph cases
     if 'paragraph' in [type1,type2]:
@@ -172,7 +173,8 @@ def combine():
     # word case
     elif type1 == 'word' and type2 == 'word': # word+word=phrase
         system_content = f"""
-        The goal is to combine the following words together into a coherent phrase with a maximum of 7 words. Other sentences in this narrative could be "{fav_list}"
+        The goal is to combine the following words together into a coherent phrase with a maximum of 7 words. 
+        Other sentences in this narrative could be "{fav_list}"
         """
         remove_punctuation = True
     else:
