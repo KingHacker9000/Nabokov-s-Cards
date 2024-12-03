@@ -79,7 +79,10 @@ def combine():
 
     remove_punctuation = False
 
-    fav_list = DB.get_favourites(session['user_id'],session['session_id'])       
+    if session.get("user_id"):
+        fav_list = DB.get_favourites(session['user_id'],session['session_id']) 
+    else:
+        fav_list = []      
 
     # paragraph cases
     if 'paragraph' in [type1,type2]:
@@ -198,7 +201,8 @@ def words():
 def update_log():
     events = request.get_json()
     for event in events:
-        DB.log_interaction(event, session['user_id'], session['session_id'])
+        if session.get('user_id'):
+            DB.log_interaction(event, session['user_id'], session['session_id'])
     
     return jsonify({"Code": "200"})
 
