@@ -80,10 +80,10 @@ def combine():
     remove_punctuation = False
 
     if session.get("user_id"):
-        fav_list = DB.get_favourites(session['user_id'],session['session_id']) 
+        fav_list = DB.get_favourites(session['user_id'],session['session_id'])
+        fav_list = '", "'.join(fav_list)
     else:
-        fav_list = []      
-
+        fav_list = ""
     # paragraph cases
     if 'paragraph' in [type1,type2]:
         if 'word' in [type1,type2]: # word+paragraph=sentence
@@ -94,7 +94,7 @@ def combine():
                                 Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
         elif 'phrase' in [type1,type2]: # phrase+paragraph=sentence
             system_content = f"""
@@ -104,7 +104,7 @@ def combine():
                                 Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
         elif 'sentence' in [type1,type2]: # sentence+paragraph=sentence
             system_content = f"""
@@ -114,7 +114,7 @@ def combine():
                                 Try to make the sentences suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
         elif type1 == type2 : # paragraph+paragraph=paragraph
             system_content = f"""
@@ -124,7 +124,7 @@ def combine():
                                 Try to make the sentences suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
     # sentence cases
     elif 'sentence' in [type1, type2]:
@@ -134,7 +134,7 @@ def combine():
                                 Keep the sentence short and less verbose. Try to make the sentence unexpected. 
                                 Remove subordinate clauses and parenthetical clauses.
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
         elif 'phrase' in [type1,type2]: # phrase+sentence=sentence
             system_content = f"""
@@ -142,7 +142,7 @@ def combine():
                                 Keep the sentence short and less verbose, keep the sentences under 30 words. Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
         elif type1 == type2 : # sentence+sentence=paragraph
             system_content = f"""
@@ -152,7 +152,7 @@ def combine():
                                 Try to make the sentences suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
     # phrase case
     elif 'phrase' in [type1, type2]:
@@ -162,7 +162,7 @@ def combine():
                                 Keep the sentence short and less verbose. Try to make the sentence unexpected. 
                                 Remove subordinate clauses and parenthetical clauses.
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
         elif type1 == type2 : # phrase+phrase=sentence
             system_content = f"""
@@ -170,12 +170,13 @@ def combine():
                                 Keep the sentence short and less verbose. Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
-                                Other sentences in this narrative could be "{fav_list}"
+                                Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
                             """
     # word case
     elif type1 == 'word' and type2 == 'word': # word+word=phrase
         system_content = f"""
-        The goal is to combine the following words together into a coherent phrase with a maximum of 7 words. Other sentences in this narrative could be "{fav_list}"
+        The goal is to combine the following words together into a coherent phrase with a maximum of 7 words. 
+        Other example senteces that appear in this narrative could be similar to but not include the same words are "{fav_list}"
         """
         remove_punctuation = True
     else:
