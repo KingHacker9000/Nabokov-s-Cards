@@ -58,7 +58,7 @@ def board():
     if request.args.get("uid"):
         session['session_id'] = DB.new_session(request.args["uid"])
         session['user_id'] = request.args["uid"]
-        favourite_list = DB.get_favourites(request.args["uid"])
+        favourite_list = DB.get_favourites(request.args["uid"], session["session_id"])
         return render_template("board.html", log=True, favourites=json.dumps(favourite_list))
     return render_template("board.html", favourites=json.dumps([]))
 
@@ -79,9 +79,11 @@ def combine():
 
     remove_punctuation = False
 
-    fav_list = DB.get_favourites(session['user_id'],session['session_id'])
-    fav_list = '", "'.join(fav_list)    
-
+    if session.get("user_id"):
+        fav_list = DB.get_favourites(session['user_id'],session['session_id'])
+        fav_list = '", "'.join(fav_list)
+    else:
+        fav_list = ""
     # paragraph cases
     if 'paragraph' in [type1,type2]:
         if 'word' in [type1,type2]: # word+paragraph=sentence
@@ -195,7 +197,8 @@ def words():
 def update_log():
     events = request.get_json()
     for event in events:
-        DB.log_interaction(event, session['user_id'], session['session_id'])
+        if session.get('user_id'):
+            DB.log_interaction(event, session['user_id'], session['session_id'])
     
     return jsonify({"Code": "200"})
 

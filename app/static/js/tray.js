@@ -55,6 +55,16 @@ function overTrayButton() {
     return mouseX > width - TrayButtonW - TrayWidth && mouseX <= width - TrayWidth && (height/2) - h <= mouseY && mouseY <= (height/2) + h
 }
 
+function touchOverTrayButton(touchX, touchY) {
+    const h = TrayButtonH/2
+
+    if (!openTray) {
+        return touchX > width - TrayButtonW && (height/2) - h <= touchY && touchY <= (height/2) + h
+    }
+
+    return touchX > width - TrayButtonW - TrayWidth && touchX <= width - TrayWidth && (height/2) - h <= touchY && touchY <= (height/2) + h
+}
+
 function clickTrayButton() {
 
     for (let i = 0; i < trayNotes.length; i++) {

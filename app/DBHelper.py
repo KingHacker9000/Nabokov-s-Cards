@@ -24,7 +24,21 @@ class LoggerDB:
             print(f"An error occurred: {e}")
             return None
         
-    def get_favourites(self, user_id: str) -> list[str]:
+    def get_favourites(self, user_id: str, session_id: str) -> list[str]:
+        query, status = self.DB.execute(
+            """SELECT f.text
+            FROM Favourites f
+            LEFT JOIN Unfavourites u
+            ON f.text = u.text AND f.user_id = u.user_id
+            JOIN Interactions i ON f.interaction_id = i.interaction_id
+            WHERE f.user_id = ? AND i.session_id = ? AND u.unfavourite_id IS NULL;
+            """,
+            (user_id, session_id)
+        )
+        print(query)
+        return [row["text"] for row in query] if query else []
+    
+    def get_all_favourites(self, user_id: str) -> list[str]:
         query, status = self.DB.execute("""SELECT f.text
             FROM Favourites f
             LEFT JOIN Unfavourites u
