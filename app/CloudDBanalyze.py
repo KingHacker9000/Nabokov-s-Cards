@@ -1,37 +1,32 @@
-import requests
-import urllib.parse  # For URL encoding
-
-DEV_URL = "http://127.0.0.1:5000/database"
-PROD_URL = "https://creative-c9e7df5a5b26.herokuapp.com/database"
-
-def fetch_data_from_database(sql_query):
-    try:
-        # URL-encode the query
-        encoded_query = urllib.parse.quote(sql_query)
-        #print(encoded_query)
-
-        # Make the GET request with the encoded query in the header
-        url = f"{PROD_URL}?command={encoded_query}"
-
-        # Make the GET request
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            return response.json(), True
-        else:
-            print(f"Failed to fetch data. Status code: {response.status_code}")
-            return None, False
-    except Exception as e:
-        print(f"An error occurred during the GET request: {e}")
-        return None, False
+from CloudDBHelper import dict_row_factory
+import sqlitecloud
 
 from datetime import datetime
 from collections import Counter
+
+from request_analyze import fetch_data_from_database
+
+from dotenv import load_dotenv
+import os
+load_dotenv(override=True)
 
 class AnalyzeRequest:
 
     def __init__(self, user_id=1):
         self.user_id = user_id
+        self.conn = sqlitecloud.connect(os.environ['SQLite_Connection'] + 'apikey='+ os.environ['SQLite_apikey'])
+        self.conn.row_factory = dict_row_factory
+        self.conn.execute("USE DATABASE UserInteractions")
+
+    def get_interaction_data(self):
+        try:
+            query = "SELECT * FROM Interactions;"
+            cursor = self.conn.execute(query)
+            result = cursor.fetchall()
+            print(result)
+        except Exception as e:
+            print(f"Error during session creation: {e}")
+            return None
 
     def analyze_session_times(self):
         DURATION_THRESHOLD = 0
@@ -328,16 +323,17 @@ class AnalyzeRequest:
 
 
 if __name__ == "__main__":
-    analyser = AnalyzeRequest(3)
-    print(analyser.analyze_session_times())
-    print(analyser.analyze_interactions_per_session())
-    print(analyser.analyze_usage_by_time_of_day())
-    print(analyser.analyze_text_edits())
-    print(analyser.analyze_text_edit_amount())
-    print(analyser.analyze_card_combinations())
-    print(analyser.analyze_combination_nature())
-    print(analyser.analyze_card_decouples())
-    print(analyser.analyze_card_regenerations())
-    print(analyser.analyze_card_event("DELETE"))
-    print(analyser.analyze_card_event("STASH"))
-    print(analyser.analyze_stash_stages())
+    analyser = AnalyzeRequest(1)
+    analyser.get_interaction_data()
+    # print(analyser.analyze_session_times())
+    # print(analyser.analyze_interactions_per_session())
+    # print(analyser.analyze_usage_by_time_of_day())
+    # print(analyser.analyze_text_edits())
+    # print(analyser.analyze_text_edit_amount())
+    # print(analyser.analyze_card_combinations())
+    # print(analyser.analyze_combination_nature())
+    # print(analyser.analyze_card_decouples())
+    # print(analyser.analyze_card_regenerations())
+    # print(analyser.analyze_card_event("DELETE"))
+    # print(analyser.analyze_card_event("STASH"))
+    # print(analyser.analyze_stash_stages())

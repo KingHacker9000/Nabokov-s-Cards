@@ -10,7 +10,8 @@ from GPT_wrapper import get_response, generate_words
 import re, random
 from wordfreq import top_n_list
 
-from DBHelper import LoggerDB
+#from DBHelper import LoggerDB
+from CloudDBHelper import LoggerDB
 
 load_dotenv(override=True)
 
@@ -26,10 +27,11 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
-# Database
-DB = LoggerDB()
-
 openai.api_key = os.environ['OPENAI_API_KEY']
+db_connection = os.environ['SQLite_Connection'] + 'apikey='+ os.environ['SQLite_apikey']
+
+# Database
+DB = LoggerDB(db_connection)
 
 # Home Directory
 @app.route('/')
@@ -187,8 +189,6 @@ def combine():
     if remove_punctuation:
         r = re.sub(r'[.,?!"]','',r)
     
-    print()
-    
     # Return the
     return jsonify({"s": r, "type": "sentence", "Prompt": [system_content, user_content]}), 200
     
@@ -202,6 +202,7 @@ def words():
 def update_log():
     events = request.get_json()
     for event in events:
+        print(session.get('user_id'))
         if session.get('user_id'):
             DB.log_interaction(event, session['user_id'], session['session_id'])
     
@@ -255,5 +256,5 @@ def get_random_word():
     return random.choice(top_words)  # Pick a random word
 
 if __name__ == '__main__':
-    
+
     app.run(host='0.0.0.0', port=port)
