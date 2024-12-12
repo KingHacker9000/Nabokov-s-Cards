@@ -3,3 +3,5 @@ virtualenv/
 app/UserInteractions.db
 app/__pycache__/
 app/DB_Test.py
+ArchiveDB/
+.vscode/
