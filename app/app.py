@@ -90,8 +90,7 @@ def combine():
     if 'paragraph' in [type1,type2]:
         if 'word' in [type1,type2]: # word+paragraph=sentence
             system_content = f"""
-                                The goal is to mix the word together with the paragraph into a 
-                                sentence in a narrative.
+                                The goal is to mix the word together with the paragraph into a short paragraph in a narrative.
                                 Keep the sentence short and less verbose. 
                                 Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
@@ -100,8 +99,7 @@ def combine():
                             """
         elif 'phrase' in [type1,type2]: # phrase+paragraph=sentence
             system_content = f"""
-                                The goal is to mix and combine the following phrase and paragraph together into a 
-                                sentence in a narrative.
+                                The goal is to mix and combine the following phrase and paragraph together into a short paragraph in a narrative.
                                 Keep the sentence short and less verbose. 
                                 Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
@@ -110,8 +108,7 @@ def combine():
                             """
         elif 'sentence' in [type1,type2]: # sentence+paragraph=sentence
             system_content = f"""
-                                The goal is to mix the following the sentence and paragraph together into a 
-                                very one to two short sentences in a narrative.
+                                The goal is to mix the following the sentence and paragraph together into a short paragraph in a narrative.
                                 Keep the paragraph concise and less verbose. 
                                 Try to make the sentences suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
@@ -120,8 +117,7 @@ def combine():
                             """
         elif type1 == type2 : # paragraph+paragraph=paragraph
             system_content = f"""
-                                The goal is to mix the following paragraphs together into a single
-                                very one to two short sentences in a narrative.
+                                The goal is to mix the following paragraphs together into a short paragraph in a narrative.
                                 Keep the paragraph concise and less verbose. 
                                 Try to make the sentences suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
@@ -132,7 +128,7 @@ def combine():
     elif 'sentence' in [type1, type2]:
         if 'word' in [type1,type2]: # word+sentence=sentence
             system_content = f"""
-                                The goal is to mix and combine the following word and sentence together into a single short coherent sentence in a narrative.
+                                The goal is to mix and combine the following word and sentence together into one or two coherent sentences in a narrative.
                                 Keep the sentence short and less verbose. Try to make the sentence unexpected. 
                                 Remove subordinate clauses and parenthetical clauses.
                                 
@@ -140,7 +136,7 @@ def combine():
                             """
         elif 'phrase' in [type1,type2]: # phrase+sentence=sentence
             system_content = f"""
-                                The goal is to mix and combine the following phrase and sentence together into a single coherent sentence in a narrative.
+                                The goal is to mix and combine the following phrase and sentence together into one or two coherent sentences in a narrative.
                                 Keep the sentence short and less verbose, keep the sentences under 30 words. Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
@@ -148,8 +144,7 @@ def combine():
                             """
         elif type1 == type2 : # sentence+sentence=paragraph
             system_content = f"""
-                                The goal is to mix and combine the following sentences together into a 
-                                one to two short sentences in a narrative.
+                                The goal is to mix and combine the following sentences together into a short paragraph in a narrative.
                                 Keep the paragraph short and less verbose. 
                                 Try to make the sentences suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
@@ -160,7 +155,7 @@ def combine():
     elif 'phrase' in [type1, type2]:
         if 'word' in [type1,type2]: # word+phrase=sentence
             system_content = f"""
-                                The goal is to combine the following word and phrase together into a single short coherent sentence in a narrative.
+                                The goal is to combine the following word and phrase together into a single coherent sentence in a narrative.
                                 Keep the sentence short and less verbose. Try to make the sentence unexpected. 
                                 Remove subordinate clauses and parenthetical clauses.
                                 
@@ -168,7 +163,7 @@ def combine():
                             """
         elif type1 == type2 : # phrase+phrase=sentence
             system_content = f"""
-                                The goal is to combine the following phrases together into a single short coherent sentence in a narrative.
+                                The goal is to combine the following phrases together into one or two coherent sentences in a narrative.
                                 Keep the sentence short and less verbose. Try to make the sentence suprising and interesting. 
                                 Remove subordinate clauses and parenthetical clauses. 
                                 
@@ -230,7 +225,7 @@ def get_type(input_string):
         return "blank"
 
     # Split the string into sentences based on common sentence-ending punctuation
-    sentences = re.split(r'[.!?]\s*', stripped_string)
+    sentences = re.split(r'[.!?;]\s*', stripped_string)
     sentences = [s for s in sentences if s]  # Remove empty strings
 
     if len(sentences) == 0:
@@ -240,7 +235,7 @@ def get_type(input_string):
         words = stripped_string.split()
         if len(words) == 1:
             return "word"
-        elif re.search(r'[.!?]$', stripped_string):
+        elif re.search(r'[.!?;]$', stripped_string):
             return "sentence"
         else:
             return "phrase"
