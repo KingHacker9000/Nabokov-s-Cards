@@ -226,6 +226,17 @@ class Paper {
             
             this.s = reply.s;
 
+            Interactions.push({
+                "event": "REGENERATE",
+                "cards": [
+                    {
+                        "original_text": original_text,
+                        "final_text": this.s,
+                        "words": this.get_words()
+                    }
+                ]
+            })
+
             if (selectedNote == this) {
                 input.value(this.s)
             }

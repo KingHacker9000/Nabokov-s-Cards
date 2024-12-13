@@ -43,7 +43,7 @@ class LoggerDB:
                 return None
             interaction_id = result['interaction_id']
 
-            if interaction["event"] in ["DECOUPLE", "COMBINE", "EDIT"]:
+            if interaction["event"] in ["DECOUPLE", "COMBINE", "EDIT", "REGENERATE"]:
                 for card in interaction["cards"]:
                     card_query = """INSERT INTO Cards (interaction_id, original_text, final_text) VALUES (?, ?, ?) RETURNING card_id;"""
                     card_cursor = self.conn.execute(card_query, (interaction_id, card.get("original_text", ""), card.get("final_text", "")))

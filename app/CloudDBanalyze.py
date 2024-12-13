@@ -20,24 +20,32 @@ class AnalyzeRequest:
 
     def get_interaction_data(self):
         try:
+            query = "SELECT * FROM Interactions WHERE user_id=?;"
+            cursor = self.conn.execute(query, (self.user_id,))
+            result = cursor.fetchall()
+            return result
+        except Exception as e:
+            print(f"Error during get Interaction Data of User {self.user_id}: {e}")
+            return None
+        
+    def get_all_interaction_data(self):
+        try:
             query = "SELECT * FROM Interactions;"
             cursor = self.conn.execute(query)
             result = cursor.fetchall()
-            print(result)
+            return result
         except Exception as e:
-            print(f"Error during session creation: {e}")
+            print(f"Error during get all interaction data: {e}")
             return None
 
     def analyze_session_times(self):
         DURATION_THRESHOLD = 0
         try:
             # Query to get session start and end times
-            result, status = fetch_data_from_database(f"""SELECT s.session_id, MIN(i.timestamp) as start_time, MAX(i.timestamp) as end_time FROM Sessions s JOIN Interactions i ON s.session_id = i.session_id WHERE s.user_id=1 GROUP BY s.session_id;
-            """)
+            cursor = self.conn.execute(f"SELECT s.session_id, MIN(i.timestamp) as start_time, MAX(i.timestamp) as end_time FROM Sessions s JOIN Interactions i ON s.session_id = i.session_id WHERE s.user_id={self.user_id} GROUP BY s.session_id;")
+            result = cursor.fetchall()
 
-            #print(status, result)
-            if not status or not result:
-                
+            if not result:
                 print("Error fetching session data.")
                 return None
 
@@ -72,13 +80,10 @@ class AnalyzeRequest:
         INTERACTION_THRESHOLD = 1
         try:
             # Query to count interactions per session
-            result, status = fetch_data_from_database(f"""SELECT session_id, COUNT(*) as interaction_count
-                FROM Interactions
-                WHERE user_id={self.user_id}
-                GROUP BY session_id;
-            """)
+            cursor = self.conn.execute(f"SELECT session_id, COUNT(*) as interaction_count FROM Interactions WHERE user_id={self.user_id} GROUP BY session_id;")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching interaction data.")
                 return None
 
@@ -101,12 +106,10 @@ class AnalyzeRequest:
     def analyze_usage_by_time_of_day(self):
         try:
             # Query to get interaction timestamps
-            result, status = fetch_data_from_database(f"""SELECT strftime('%H', timestamp) as hour_of_day
-                FROM Interactions
-                WHERE user_id={self.user_id};
-            """)
+            cursor = self.conn.execute(f"SELECT strftime('%H', timestamp) as hour_of_day FROM Interactions WHERE user_id={self.user_id};")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching timestamp data.")
                 return None
 
@@ -126,12 +129,10 @@ class AnalyzeRequest:
     def analyze_text_edits(self):
         try:
             # Query to count EDIT events
-            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as edit_count
-                FROM Interactions
-                WHERE event = 'EDIT' AND user_id={self.user_id};
-            """)
+            cursor = self.conn.execute(f"SELECT COUNT(*) as edit_count FROM Interactions WHERE event = 'EDIT' AND user_id={self.user_id};")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching edit data.")
                 return None
 
@@ -146,16 +147,10 @@ class AnalyzeRequest:
     def analyze_text_edit_amount(self):
         try:
             # Query to calculate edit amount
-            result, status = fetch_data_from_database(f"""SELECT original_text, final_text
-                FROM Cards
-                WHERE interaction_id IN (
-                    SELECT interaction_id
-                    FROM Interactions
-                    WHERE event = 'EDIT' AND user_id={self.user_id}
-                );
-            """)
+            cursor = self.conn.execute(f"SELECT original_text, final_text FROM Cards WHERE interaction_id IN (SELECT interaction_id FROM Interactions WHERE event = 'EDIT' AND user_id={self.user_id});")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching text edit data./ No Edits Yet!")
                 return None
 
@@ -177,12 +172,10 @@ class AnalyzeRequest:
     def analyze_card_combinations(self):
         try:
             # Query to count COMBINE events
-            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as combine_count
-                FROM Interactions
-                WHERE event = 'COMBINE' AND user_id={self.user_id};
-            """)
+            cursor = self.conn.execute(f"SELECT COUNT(*) as combine_count FROM Interactions WHERE event = 'COMBINE' AND user_id={self.user_id};")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching combine data.")
                 return None
 
@@ -196,16 +189,10 @@ class AnalyzeRequest:
     def analyze_combination_nature(self):
         try:
             # Query to analyze nature of combinations
-            result, status = fetch_data_from_database(f"""SELECT original_text, final_text
-                FROM Cards
-                WHERE interaction_id IN (
-                    SELECT interaction_id
-                    FROM Interactions
-                    WHERE event = 'COMBINE' AND user_id={self.user_id}
-                );
-            """)
+            cursor = self.conn.execute(f"SELECT original_text, final_text FROM Cards WHERE interaction_id IN (SELECT interaction_id FROM Interactions WHERE event = 'COMBINE' AND user_id={self.user_id});")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching combination data.")
                 return None
 
@@ -238,12 +225,10 @@ class AnalyzeRequest:
     def analyze_card_decouples(self):
         try:
             # Query to count DECOUPLE events
-            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as decouple_count
-                FROM Interactions
-                WHERE event = 'DECOUPLE' AND user_id={self.user_id};
-            """)
+            cursor = self.conn.execute(f"SELECT COUNT(*) as decouple_count FROM Interactions WHERE event = 'DECOUPLE' AND user_id={self.user_id};")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching decouple data.")
                 return None
 
@@ -257,12 +242,11 @@ class AnalyzeRequest:
     def analyze_card_regenerations(self):
         try:
             # Query to count DECOUPLE events
-            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as regenerate_count
-                FROM Interactions
-                WHERE event = 'REGENERATE' AND user_id={self.user_id};
-            """)
+            cursor = self.conn.execute(f"SELECT COUNT(*) as regenerate_count FROM Interactions WHERE event = 'REGENERATE' AND user_id={self.user_id};")
+            result = cursor.fetchall()
+            print(result)
 
-            if not status or not result:
+            if not result:
                 print("Error fetching regenerate data.")
                 return None
 
@@ -276,12 +260,10 @@ class AnalyzeRequest:
     def analyze_card_event(self, event: str):
         try:
             # Query to count DECOUPLE events
-            result, status = fetch_data_from_database(f"""SELECT COUNT(*) as event_count
-                FROM Interactions
-                WHERE event='{event}' AND user_id={self.user_id};
-            """)
+            cursor = self.conn.execute(f"SELECT COUNT(*) as event_count FROM Interactions WHERE event='{event}' AND user_id={self.user_id};")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print(f"Error fetching {event} data.")
                 return None
 
@@ -295,13 +277,10 @@ class AnalyzeRequest:
     def analyze_stash_stages(self):
         try:
             # Query to count combines before each stash
-            result, status = fetch_data_from_database(f"""SELECT interaction_id, event
-                FROM Interactions
-                WHERE event IN ('COMBINE', 'STASH') AND user_id={self.user_id}
-                ORDER BY timestamp;
-            """)
+            cursor = self.conn.execute(f"SELECT interaction_id, event FROM Interactions WHERE event IN ('COMBINE', 'STASH') AND user_id={self.user_id} ORDER BY timestamp;")
+            result = cursor.fetchall()
 
-            if not status or not result:
+            if not result:
                 print("Error fetching stash stage data.")
                 return None
 
@@ -324,16 +303,16 @@ class AnalyzeRequest:
 
 if __name__ == "__main__":
     analyser = AnalyzeRequest(1)
-    analyser.get_interaction_data()
+    # print(analyser.get_all_interaction_data())
     # print(analyser.analyze_session_times())
-    # print(analyser.analyze_interactions_per_session())
-    # print(analyser.analyze_usage_by_time_of_day())
-    # print(analyser.analyze_text_edits())
-    # print(analyser.analyze_text_edit_amount())
-    # print(analyser.analyze_card_combinations())
-    # print(analyser.analyze_combination_nature())
-    # print(analyser.analyze_card_decouples())
-    # print(analyser.analyze_card_regenerations())
-    # print(analyser.analyze_card_event("DELETE"))
-    # print(analyser.analyze_card_event("STASH"))
-    # print(analyser.analyze_stash_stages())
+    print(analyser.analyze_interactions_per_session())
+    print(analyser.analyze_usage_by_time_of_day())
+    print(analyser.analyze_text_edits())
+    print(analyser.analyze_text_edit_amount())
+    print(analyser.analyze_card_combinations())
+    print(analyser.analyze_combination_nature())
+    print(analyser.analyze_card_decouples())
+    print(analyser.analyze_card_regenerations())
+    print(analyser.analyze_card_event("DELETE"))
+    print(analyser.analyze_card_event("STASH"))
+    print(analyser.analyze_stash_stages())
