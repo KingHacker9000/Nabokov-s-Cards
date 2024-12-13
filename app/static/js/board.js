@@ -1019,7 +1019,7 @@ function mouseReleased() {
 
             console.log(currentTime, lastTouchTime)
             notes.forEach(other => {
-                if(currentTime - lastTouchTime > 300 && other != note && note.isOverlapped(other)  && !trayNotes.includes(note) && !TimeUp){
+                if(currentTime - lastTouchTime > 300 && other != note && note.isOverlapped(other)  && !trayNotes.includes(note) && !TimeUp && note.s != "" && other.s != ""){
 
                     moveToEnd(notes, i).pop()
                     note.carnation.hide()
