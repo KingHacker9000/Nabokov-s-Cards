@@ -300,9 +300,18 @@ class AnalyzeRequest:
             print(f"An error occurred during stash stage analysis: {e}")
             return None
 
+def get_user_id(name):
+    conn = sqlitecloud.connect(os.environ['SQLite_Connection'] + 'apikey='+ os.environ['SQLite_apikey'])
+    conn.row_factory = dict_row_factory
+    conn.execute("USE DATABASE UserInteractions")
+    cursor = conn.execute("SELECT * FROM Users WHERE user_name=?", (name,))
+    return cursor.fetchone()['user_id']
+
 
 if __name__ == "__main__":
-    analyser = AnalyzeRequest(user_id=1)
+    user_id = get_user_id("Ash")
+    print(user_id)
+    analyser = AnalyzeRequest(user_id)
     # print(analyser.get_all_interaction_data())
     print(analyser.get_interaction_data())
     print(analyser.analyze_session_times())
