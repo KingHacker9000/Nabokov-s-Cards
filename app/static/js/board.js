@@ -485,8 +485,9 @@ function doubleClicked() {
         // Make new note
         // let new_note = new Paper(wordStash.pop(), mouseX, mouseY);
         let new_note = new Paper("Enter Text", mouseX, mouseY);
-        history.push(new HistoryAdd(new_note))
-        historyIndex += 1
+        const newHistory = new HistoryAdd(new_note)
+        history.push(newHistory)
+        historyIndex = history.length - 1
         selectedNote = new_note;
         input.show();
         Editing = true;
@@ -636,8 +637,9 @@ function regenerateNote(){
     if(selectedNote.madeFrom != [] && selected && !trayNotes.includes(selectedNote) && ! TimeUp){
         let s = selectedNote.s
         selectedNote.regenerate()
-        history.push(new HistoryRegenerate(selectedNote, s))
-        historyIndex += 1
+        const newHistory = new HistoryRegenerate(selectedNote, s)
+        history.push(newHistory)
+        historyIndex = history.length - 1
     }
 }
 
@@ -665,8 +667,9 @@ function decoupleNote() {
             ]
         })
 
-        history.push(new HistoryDecouple(n1, n2, selectedNote))
-        historyIndex += 1
+        const newHistory = new HistoryDecouple(n1, n2, selectedNote)
+        history.push(newHistory)
+        historyIndex = history.length - 1
         selectedNote.carnation.hide()
         moveToEnd(notes, notes.indexOf(selectedNote)).pop()
         selectedNote = null;
@@ -678,8 +681,9 @@ function deleteNote() {
     Interactions.push({
         "event": "DELETE"
     })
-    history.push(new HistoryDelete(selectedNote))
-    historyIndex += 1
+    const newHistory = new HistoryDelete(selectedNote)
+    history.push(newHistory)
+    historyIndex = history.length - 1
     moveToEnd(notes, notes.indexOf(selectedNote)).pop();
     selectedNote.carnation.hide()
 }
@@ -967,8 +971,12 @@ function mouseReleased() {
         // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
         spot = findEmptySpot()
         let new_note = new Paper("Enter Text", spot.x, spot.y);
-        history.push(new HistoryAdd(new_note))
-        historyIndex += 1
+        console.log(history, "pre")
+        const newAdd = new HistoryAdd(new_note)
+        console.log(history, "post")
+        history.push(newAdd)
+        console.log(history, "post")
+        historyIndex = history.length - 1
         Interactions.push({
             "event": "ADD"
         })
@@ -996,16 +1004,18 @@ function mouseReleased() {
 
     // Redo Button
     if (historyIndex >= -1 && history.length > 0 && 100 <= mouseX && mouseX <= 150
-        && height-60 <= mouseY  && mouseY <= height - 10
+        && height-60 <= mouseY  && mouseY <= height - 10 && history.length > historyIndex+1
     ) {
-        historyIndex += 1
         if (DEBUG) {
             console.log("REDO", historyIndex)
         }
         Interactions.push({
             "event": "REDO"
         })
-        history[historyIndex].redo()
+        // Move historyIndex forward first
+        historyIndex += 1;
+        // Then redo the action at the new historyIndex
+        history[historyIndex].redo();
     }
 
     // Notes Pickup & Merge
@@ -1074,8 +1084,9 @@ function touchEnded() {
         // let new_note = new Paper(wordStash.pop(), random(0, width*0.75), random(0, height*0.75));
         spot = findEmptySpot()
         let new_note = new Paper("Enter Text", spot.x, spot.y);
-        history.push(new HistoryAdd(new_note))
-        historyIndex += 1
+        const newHistory = new HistoryAdd(new_note)
+        history.push(newHistory)
+        historyIndex = history.length - 1
         Interactions.push({
             "event": "ADD"
         })
@@ -1105,14 +1116,16 @@ function touchEnded() {
     if (historyIndex >= -1 && history.length > 0 && 100 <= touchX && touchX <= 150
         && height-60 <= touchY  && touchY <= height - 10
     ) {
-        historyIndex += 1
         if (DEBUG) {
             console.log("REDO", historyIndex)
         }
         Interactions.push({
             "event": "REDO"
         })
-        history[historyIndex].redo()
+        // Move historyIndex forward first
+        historyIndex += 1;
+        // Then redo the action at the new historyIndex
+        history[historyIndex].redo();
     }
 
     // Notes Pickup & Merge
@@ -1221,8 +1234,9 @@ async function mix_note(n1, n2, new_note, animation) {
             ]
         })
         animation.complete()
-        history.push(new HistoryCouple(n1, n2, notes[notes.length-1]))
-        historyIndex += 1
+        const newHistory = new HistoryCouple(n1, n2, notes[notes.length-1])
+        history.push(newHistory)
+        historyIndex = history.length - 1
 
     } catch (error) {
         console.log(error)
@@ -1241,8 +1255,9 @@ async function make_notes(n) {
             spot = findEmptySpot()
             //let n = new Paper(s, spot.x, spot.y)
             let n = new Paper("", spot.x, spot.y)
-            history.push(new HistoryAdd(n))
-            historyIndex += 1
+            const newHistory = new HistoryAdd(n)
+            history.push(newHistory)
+            historyIndex = history.length - 1
             notes.push(n)
         });
 

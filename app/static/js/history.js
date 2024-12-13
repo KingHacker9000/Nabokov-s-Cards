@@ -1,11 +1,13 @@
-const history = []
-let historyIndex = -1
+let history = []
+let historyIndex = 0
 
 class HistoryAction {
 
     constructor(){
-        for (let i = historyIndex+1; i < history.length; i++) {
-            moveToEnd(history, historyIndex+1).pop()
+        console.log(history, "a", historyIndex)
+        console.log("slice:", history.slice(0, historyIndex+1))
+        if (historyIndex+1 < history.length) {
+            history = history.slice(0, historyIndex+1)
         }
         console.log(history)
     }
