@@ -475,6 +475,7 @@ function doubleClicked() {
             //input.style('background-color', `rgb(${selectedNote.color[0]}, ${selectedNote.color[1]}, ${selectedNote.color[2]})`);
             input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
             input.value(note.s);  // Set the input value to the current note's content
+            inputElement.focus();
             return;
         }
     }
@@ -1155,6 +1156,9 @@ function touchEnded() {
 async function mix_note(n1, n2, new_note, animation) {
 
     if (TimeUp) return
+    if (n1.s == "" || n2.s == "") {
+        return
+    }
 
     try {
         const baseUrl = `${window.location.protocol}//${window.location.hostname}${window.location.port ? ':' + window.location.port : ''}`;
