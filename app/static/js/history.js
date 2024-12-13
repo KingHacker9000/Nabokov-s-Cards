@@ -109,9 +109,11 @@ class HistoryAdd extends HistoryAction {
     undo () {
         this.note.carnation.hide()
         moveToEnd(notes, notes.indexOf(this.note)).pop()
+        this.note.carnation.hide()
     }
 
     redo () {
         notes.push(this.note)
+        this.note.carnation.show()
     }
 }

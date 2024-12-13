@@ -71,21 +71,19 @@ class Paper {
             this.sizeFac = 1;
         }
 
-        // See Stack
-        if (selected && selectedNote == this && this.madeFrom.length > 0) {
-            // drawMadeFromNote(this.madeFrom[0], this.x+(60*this.sizeFac), this.y-(60*this.sizeFac), this.w*this.sizeFac, this.h*this.sizeFac, this.color)
-            // drawMadeFromNote(this.madeFrom[1], this.x+(30*this.sizeFac), this.y-(30*this.sizeFac), this.w*this.sizeFac, this.h*this.sizeFac, this.color)
-        }
-
-
         //drawStickyNote(this.x, this.y, this.w, this.h, this.color, this.sizeFac);
         const scaleF = this.w * this.sizeFac / this.image.width;
         this.imgWidth = this.image.width * scaleF;
         this.imgHeight = this.image.height * scaleF;
-        image(this.image, this.x, this.y, this.imgWidth, this.imgHeight)
         
         // Draw Carnation
-        this.carnation.show()
+        if (notes.includes(this)) {
+            image(this.image, this.x, this.y, this.imgWidth, this.imgHeight)
+            this.carnation.show()   
+        }
+        else {
+            this.carnation.hide()
+        }
         this.carnation.position(this.x + (this.imgWidth-40* this.sizeFac) , this.y + (this.imgHeight -40* this.sizeFac))
         this.carnation.size(40*this.sizeFac, 32*this.sizeFac)
 
@@ -101,7 +99,7 @@ class Paper {
         textFont('Lora');
         noStroke()
 
-        if (selectedNote != this) {
+        if (selectedNote != this && notes.includes(this)) {
             drawWrappedPaperText(this.s, Math.trunc(this.x + (this.w/2)*this.sizeFac), Math.trunc(this.y), (this.w - 70)*this.sizeFac, this.imgHeight, this.sizeFac, fSize)
         }
 
@@ -245,11 +243,16 @@ class Paper {
 
     resize() {
 
-        if (this.s.length > 15 && this.type == "word"){
+        let type = this.type
+        if (this.s.length > 20 && this.type == "word"){
             this.type = "sentence"
+            type = "phrase"
         }
         if (this.s.length > 100) {
             this.type = "paragraph"
+        }
+        if (this.type == "phrase") {
+            this.type = "sentence"
         }
 
 
@@ -266,6 +269,8 @@ class Paper {
         if (this.s.length < 400) {
             this.type = "sentence"
         }
+
+        this.type = type;
 
     }
 
@@ -307,6 +312,7 @@ function drawWrappedPaperText(s, x, y, maxWidth, height, sizeFac, fSize) {
         }
     }
     //text(line, x, y); // Draw any remaining text in the last line
+    // x=
     lines.push({s: line, y: curr_y})
 
     let half_y = curr_y / 2
@@ -318,11 +324,23 @@ function drawWrappedPaperText(s, x, y, maxWidth, height, sizeFac, fSize) {
             //const restH = textHeight(line.s)/2
             textAlign(LEFT, CENTER);
             textSize(2*fSize)
-            const firstW = textWidth(line.s[0].toUpperCase())/2
-            text(line.s[0].toUpperCase(), x-restW/2 - firstW, y + height/2 - half_y + line.y- 4*sizeFac)
-            textAlign(CENTER, CENTER);
-            textSize(fSize)
-            text(line.s.slice(1, line.length), x + firstW, y + height/2 - half_y + line.y)
+            let firstW;
+            if (['"', "'", "*"].includes(line.s[0])) {
+                firstW = textWidth(line.s[0].toUpperCase() + line.s[1].toUpperCase())/2
+                text((line.s[0]+line.s[1]).toUpperCase(), x-restW/2 - firstW, y + height/2 - half_y + line.y- 4*sizeFac)
+                textAlign(CENTER, CENTER);
+                textSize(fSize)
+                text(line.s.slice(2, line.length), x + firstW-(4*sizeFac), y + height/2 - half_y + line.y)
+            }
+            else {
+                firstW = textWidth(line.s[0].toUpperCase())/2
+                text(line.s[0].toUpperCase(), x-restW/2 - firstW, y + height/2 - half_y + line.y- 4*sizeFac)
+                textAlign(CENTER, CENTER);
+                textSize(fSize)
+                text(line.s.slice(1, line.length), x + firstW, y + height/2 - half_y + line.y)
+            }
+            
+            
         }
         else{
             text(line.s, x, y + height/2 - half_y + line.y)

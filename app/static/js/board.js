@@ -666,8 +666,10 @@ function decoupleNote() {
 
         history.push(new HistoryDecouple(n1, n2, selectedNote))
         historyIndex += 1
-        moveToEnd(notes, notes.indexOf(selectedNote)).pop()
         selectedNote.carnation.hide()
+        selectedNote = null;
+        input.hide()
+        moveToEnd(notes, notes.indexOf(selectedNote)).pop()
     }
 }
 
@@ -1198,6 +1200,7 @@ async function mix_note(n1, n2, new_note, animation) {
         input.size((selectedNote.imgWidth-50) * selectedNote.sizeFac, (selectedNote.imgHeight - 50) * selectedNote.sizeFac);
         input.style('background-color', 'rgba(255,255,255, 0)'); // Plain white background
         input.value(selectedNote.s);  // Set the input value to the current note's content
+        inputElement.focus();
         Interactions.push({
             "event": "COMBINE",
             "cards": [
