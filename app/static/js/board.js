@@ -667,9 +667,9 @@ function decoupleNote() {
         history.push(new HistoryDecouple(n1, n2, selectedNote))
         historyIndex += 1
         selectedNote.carnation.hide()
+        moveToEnd(notes, notes.indexOf(selectedNote)).pop()
         selectedNote = null;
         input.hide()
-        moveToEnd(notes, notes.indexOf(selectedNote)).pop()
     }
 }
 
