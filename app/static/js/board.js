@@ -709,20 +709,6 @@ function drawNewNoteButton() {
 }
 
 function drawHowToButton() {
-    // const r = 75;
-
-    // fill(205, 205, 205, 230)
-    // stroke(0, 0, 0, 200)
-    // if ((mouseX - (width - 60))**2 + (mouseY - (60))**2 < r**1.5) {
-    //     fill(100, 100, 100, 230) 
-    // }
-    // circle(width - 60, 60, r)
-    // textSize(24);
-    // textFont('Lora');
-    // stroke(0, 0, 0)
-    // fill(0,0,0)
-    // textAlign(CENTER, CENTER);
-    // text(openTutorial? "X":"?", width - 60, 60)
 
     let ImageHSize = 80
     image(NabokovImage, 10, 10, NabokovImage.width*(ImageHSize/NabokovImage.height), ImageHSize)
@@ -784,7 +770,12 @@ function drawTutorialOverlay() {
   
     // Draw a placeholder for the image
     fill(150); // Gray placeholder
-    image(NabokovImage, imgX, imgY, imgSize, NabokovImage.height*(imgSize/NabokovImage.width))
+    if (mouseIsPressed) {
+        image(NabokovImage, imgX, imgY, imgSize, NabokovImage.height*(imgSize/NabokovImage.width))
+    }
+    else {
+        image(NabokovImageOpen, imgX, imgY, imgSize, NabokovImageOpen.height*(imgSize/NabokovImageOpen.width))
+    }
     fill(0);
     textSize(14);
     rectMode(CORNER);
