@@ -302,9 +302,10 @@ class AnalyzeRequest:
 
 
 if __name__ == "__main__":
-    analyser = AnalyzeRequest(1)
+    analyser = AnalyzeRequest(user_id=1)
     # print(analyser.get_all_interaction_data())
-    # print(analyser.analyze_session_times())
+    print(analyser.get_interaction_data())
+    print(analyser.analyze_session_times())
     print(analyser.analyze_interactions_per_session())
     print(analyser.analyze_usage_by_time_of_day())
     print(analyser.analyze_text_edits())

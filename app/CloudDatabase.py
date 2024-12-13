@@ -97,11 +97,12 @@ def add_user(conn, user_name):
     cursor = conn.execute(query, (user_name,))
     user_id = cursor.fetchone()[0]
     print(f"User {user_id} added.")
+    print(f"Link: https://creative-c9e7df5a5b26.herokuapp.com/board?uid={user_id}")
 
 
 if __name__ == "__main__":
 
-    RESTART = True
+    RESTART = False
 
     if RESTART and input('WARNING DROP? (Y/n): ').lower() == 'y':
         # Disable foreign key checks temporarily
@@ -110,14 +111,17 @@ if __name__ == "__main__":
             conn.execute(query)
         conn.execute("PRAGMA foreign_keys = ON;")
 
-    for query in create_table_queries:
-        conn.execute(query)
+        for query in create_table_queries:
+            conn.execute(query)
 
     # Add sample users
-    sample_users = ['Ash', 'Dashiel', 'Nicole', 'Abhishek', 'Bogdan', 'Jeb', 'Matthew', 'Patrick', 'Warren']
+    #sample_users = ['Ash', 'Dashiel', 'Nicole', 'Abhishek', 'Bogdan', 'Jeb', 'Matthew', 'Patrick', 'Warren']
+    ADD_USERS = False
+    if ADD_USERS:
+        new_users = ["User 1", "User 2", "User 3", "User 4", "User 5", "User 6", "User 7", "User 8", "User 9", "User 10", "User 11", "User 12", "User 13", "User 14", "User 15", "User 16"]
 
-    for user in sample_users:
-        add_user(conn, user)
+        for user in new_users:
+            add_user(conn, user)
 
     # Fetch and display all users
     cursor = conn.execute("SELECT * FROM Users;")
